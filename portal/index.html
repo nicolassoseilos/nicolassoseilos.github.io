@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maria – your calls</title>
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maria">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#f6f7f8;--card:#fff;--ink:#14181f;--mute:#5d6673;--line:#e3e6ea;--accent:#0f766e;--accent2:#14b8a6;--bad:#b42318;--warn:#b54708;--ok:#067647;--chip:#eef2f4}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--ink:#e8ebef;--mute:#9aa4b1;--line:#2a3038;--accent:#2dd4bf;--accent2:#5eead4;--bad:#f97066;--warn:#fdb022;--ok:#47cd89;--chip:#222831}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px calc(10px);padding-top:max(10px,env(safe-area-inset-top))}
+.top{display:flex;align-items:center;gap:10px}
+.top h1{font-size:17px;margin:0;flex:1}
+.live{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.dot{width:11px;height:11px;border-radius:50%;background:#9aa4b1}
+.dot.on{background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav.tabs button,.seg button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:14px;white-space:nowrap}
+nav.tabs button.on,.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bar{display:flex;gap:8px;align-items:center;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.seg{display:flex;gap:4px;flex-wrap:nowrap;flex:none}
+.seg button{padding:4px 10px;font-size:13px}
+.custom{display:none;gap:6px;align-items:center;font-size:13px}
+.custom.on{display:flex}
+input[type=date]{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:4px 6px}
+main{padding:12px 16px;max-width:900px;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card .n{font-size:24px;font-weight:650}
+.card .l{font-size:12px;color:var(--mute)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.panel h2{font-size:15px;margin:0 0 8px}
+.row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.row:first-of-type{border-top:0}
+.row .main{flex:1;min-width:0}
+.row .t{font-weight:600}
+.row .s{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.pill{font-size:12px;border-radius:999px;padding:2px 8px;background:var(--chip);white-space:nowrap}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:6px 4px;border-top:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:500;font-size:12px}
+td.r,th.r{text-align:right}
+canvas{max-height:260px}
+.muted{color:var(--mute);font-size:13px}
+.login{max-width:360px;margin:12vh auto;padding:0 16px}
+.login h1{font-size:22px}
+.login input{width:100%;padding:12px;margin:6px 0;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:16px}
+.btn{display:inline-block;border:0;background:var(--accent);color:#fff;border-radius:10px;padding:12px 16px;font-size:16px;width:100%;margin-top:8px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.small{width:auto;padding:6px 12px;font-size:14px;margin:0}
+.err{color:var(--bad);font-size:14px;min-height:20px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:0;width:min(640px,94vw);max-height:88vh}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:14px 16px;overflow:auto;max-height:80vh}
+.dlg pre{white-space:pre-wrap;font:13px/1.5 inherit;background:var(--bg);border-radius:10px;padding:10px}
+.dlgfoot{display:flex;gap:8px;justify-content:flex-end;padding:10px 16px;border-top:1px solid var(--line)}
+.tick{display:flex;align-items:center;gap:8px}
+.tick input{width:22px;height:22px;accent-color:var(--accent)}
+.hide{display:none!important}
+.small{font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login hide">
+  <h1>Maria</h1>
+  <p class="muted">Sign in to see your calls, bookings and messages.</p>
+  <form id="loginForm">
+    <input id="email" type="email" autocomplete="username" placeholder="Email" required>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password" required>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" type="submit">Sign in</button>
+  </form>
+  <button class="btn ghost" id="forgotBtn" type="button">Forgot password?</button>
+</div>
+
+<div id="resetView" class="login hide">
+  <h1>Set a new password</h1>
+  <form id="resetForm">
+    <input id="newpw" type="password" autocomplete="new-password" placeholder="New password (8+ characters)" minlength="8" required>
+    <div class="err" id="resetErr"></div>
+    <button class="btn" type="submit">Save password</button>
+  </form>
+</div>
+
+<div id="appView" class="hide">
+<header>
+  <div class="top">
+    <h1 id="bizName">Maria</h1>
+    <div class="live" title="Lit whenever Maria is on a call on any line"><span class="dot" id="liveDot"></span><span id="liveText">…</span></div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="calls" class="on">Calls</button>
+    <button data-tab="bookings">Bookings &amp; money</button>
+    <button data-tab="messages">Messages</button>
+    <button data-tab="clients">Clients</button>
+    <button data-tab="grades">How calls went</button>
+  </nav>
+  <div class="bar">
+    <div class="seg" id="ranges">
+      <button data-r="1">1 day</button><button data-r="3">3 days</button><button data-r="7" class="on">Week</button>
+      <button data-r="30">Month</button><button data-r="365">Year</button><button data-r="custom">Dates…</button>
+    </div>
+    <div class="custom" id="customBox"><input type="date" id="from"> – <input type="date" id="to"></div>
+    <div class="seg" id="modes"><button data-m="list" class="on">List</button><button data-m="graphs">Graphs</button></div>
+  </div>
+</header>
+<main id="main"><p class="muted">Loading…</p></main>
+<p class="muted small" style="text-align:center;padding:0 16px 20px">View only. <a href="#" id="signOut">Sign out</a></p>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div><div class="dlgfoot" id="dlgFoot"></div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script>
+const CFG = window.PORTAL_CONFIG || {
+  url: "https://dlxplhhsjmwilgwwjryx.supabase.co",
+  key: "sb_publishable_7G5H8UEOUuRb0Q4rZnebeA_zyBidQeW",
+};
+const sb = supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true, storageKey: "maria-portal"}});
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TZ = "Asia/Nicosia";
+const fmtDT = d => new Date(d).toLocaleString("en-GB", {timeZone: TZ, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
+const fmtD = d => new Date(d).toLocaleDateString("en-GB", {timeZone: TZ, day: "numeric", month: "short"});
+const eur = n => "€" + Math.round(n || 0).toLocaleString("en-GB");
+const mins = s => s == null ? "–" : (s >= 60 ? Math.floor(s / 60) + "m " : "") + (s % 60) + "s";
+const LANG = {el: "Greek", en: "English", ru: "Russian", greek: "Greek", english: "English"};
+
+let state = {tab: "calls", range: "7", mode: "list", data: null, charts: []};
+let me = null;
+
+// ---------- sign in ----------
+function show(id) { for (const v of ["loginView", "resetView", "appView"]) $("#" + v).classList.toggle("hide", v !== id); }
+
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); $("#loginErr").textContent = "";
+  const {error} = await sb.auth.signInWithPassword({email: $("#email").value.trim(), password: $("#password").value});
+  if (error) { $("#loginErr").textContent = "Email or password not right."; return; }
+  start();
+});
+$("#forgotBtn").addEventListener("click", async () => {
+  const email = $("#email").value.trim();
+  if (!email) { $("#loginErr").textContent = "Type your email first, then tap this again."; return; }
+  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
+  $("#loginErr").textContent = error ? "Could not send the email just now. Try again later." : "If that email has an account, a reset link is on its way.";
+});
+$("#resetForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const {error} = await sb.auth.updateUser({password: $("#newpw").value});
+  if (error) { $("#resetErr").textContent = error.message; return; }
+  history.replaceState(null, "", location.pathname); start();
+});
+$("#signOut").addEventListener("click", async e => { e.preventDefault(); await sb.auth.signOut(); show("loginView"); });
+sb.auth.onAuthStateChange(ev => { if (ev === "PASSWORD_RECOVERY") show("resetView"); });
+
+// ---------- controls ----------
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.tab = b.dataset.tab; on("#tabs", b); render(); });
+$("#ranges").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; state.range = b.dataset.r; on("#ranges", b);
+  $("#customBox").classList.toggle("on", state.range === "custom");
+  if (state.range !== "custom") load();
+});
+$("#modes").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.mode = b.dataset.m; on("#modes", b); render(); });
+for (const id of ["#from", "#to"]) $(id).addEventListener("change", () => { if ($("#from").value && $("#to").value) load(); });
+function on(group, btn) { for (const x of $(group).querySelectorAll("button")) x.classList.toggle("on", x === btn); }
+
+function span() {
+  const now = new Date();
+  if (state.range === "custom") {
+    const a = new Date($("#from").value + "T00:00:00"), b = new Date($("#to").value + "T23:59:59");
+    return [a, b];
+  }
+  const days = +state.range, a = new Date(now);
+  a.setHours(0, 0, 0, 0); a.setDate(a.getDate() - (days - 1));
+  return [a, now];
+}
+
+// ---------- data ----------
+async function all(q) {
+  let out = [], from = 0;
+  for (;;) {
+    const {data, error} = await q().range(from, from + 999);
+    if (error) throw error;
+    out = out.concat(data); if (data.length < 1000) return out; from += 1000;
+  }
+}
+async function load() {
+  const [a, b] = span();
+  $("#main").innerHTML = '<p class="muted">Loading…</p>';
+  try {
+    const A = a.toISOString(), B = b.toISOString();
+    const [calls, books, msgs, clients] = await Promise.all([
+      all(() => sb.from("call_log").select("id,call_time,phone,caller_name,action_taken,service_requested,call_language,duration_s,qa_result,qa_score,qa_notes,staff,summary,got_busy,recording_path,test_call").gte("call_time", A).lte("call_time", B).order("call_time", {ascending: false})),
+      all(() => sb.from("bookings_log").select("*").gte("event_time", A).lte("event_time", B).order("event_time", {ascending: false})),
+      all(() => sb.from("messages").select("*").gte("created_at", A).lte("created_at", B).order("created_at", {ascending: false})),
+      all(() => sb.from("clients").select("id,name,phone,total_visits,last_service,last_appointment,created_at,is_dependent").order("created_at", {ascending: false})),
+    ]);
+    state.data = {calls, books, msgs, clients, a, b};
+    render();
+  } catch (e) {
+    $("#main").innerHTML = `<div class="panel"><p class="err">Could not load: ${esc(e.message || e)}</p></div>`;
+  }
+}
+
+// ---------- helpers ----------
+function killCharts() { state.charts.forEach(c => c.destroy()); state.charts = []; }
+function chart(el, cfg) {
+  const css = getComputedStyle(document.documentElement);
+  Chart.defaults.color = css.getPropertyValue("--mute").trim();
+  Chart.defaults.borderColor = css.getPropertyValue("--line").trim();
+  cfg.options = Object.assign({responsive: true, maintainAspectRatio: false, plugins: {legend: {display: cfg.legend || false}}}, cfg.options || {});
+  const c = new Chart(el, cfg); state.charts.push(c); return c;
+}
+const accent = () => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+function count(arr, key) { const m = new Map(); for (const x of arr) { const k = typeof key === "function" ? key(x) : x[key]; if (k == null || k === "") continue; m.set(k, (m.get(k) || 0) + 1); } return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+function byDay(arr, field, val = () => 1) {
+  const [a, b] = [state.data.a, state.data.b], m = new Map();
+  for (let d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) m.set(fmtD(d), 0);
+  for (const x of arr) { const k = fmtD(x[field]); if (m.has(k)) m.set(k, m.get(k) + val(x)); }
+  return [[...m.keys()], [...m.values()]];
+}
+function cards(items) { return `<div class="cards">${items.map(([n, l]) => `<div class="card"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>`; }
+function canvas(title, id) { return `<div class="panel"><h2>${esc(title)}</h2><div style="height:240px"><canvas id="${id}"></canvas></div></div>`; }
+function grade(c) {
+  if (c.qa_result == null) return '<span class="pill">not graded</span>';
+  const cls = c.qa_result === "Pass" ? "ok" : c.qa_result === "Fail" ? "bad" : "warn";
+  const word = c.qa_result === "Pass" ? "Handled well" : c.qa_result === "Fail" ? "Not handled well" : "Check";
+  return `<span class="pill ${cls}">${word}${c.qa_score != null ? " · " + c.qa_score : ""}</span>`;
+}
+function hourOf(d) { return +new Date(d).toLocaleString("en-GB", {timeZone: TZ, hour: "2-digit", hour12: false}); }
+function dayOf(d) { return new Date(d).toLocaleDateString("en-GB", {timeZone: TZ, weekday: "short"}); }
+
+// ---------- views ----------
+function render() {
+  killCharts();
+  if (!state.data) return;
+  ({calls: viewCalls, bookings: viewBookings, messages: viewMessages, clients: viewClients, grades: viewGrades})[state.tab]();
+}
+
+function viewCalls() {
+  const {calls} = state.data;
+  const answered = calls.filter(c => !c.got_busy), busy = calls.filter(c => c.got_busy);
+  const durs = answered.map(c => c.duration_s).filter(x => x != null);
+  const avg = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null;
+  const hours = count(calls, c => hourOf(c.call_time)), langs = count(calls, c => LANG[(c.call_language || "").toLowerCase()] || c.call_language);
+  let h = cards([[calls.length, "calls"], [mins(avg), "average length"], [busy.length, "callers got busy"],
+    [hours[0] ? hours[0][0] + ":00" : "–", "busiest hour"], [langs.map(([k, v]) => `${k} ${v}`).join(", ") || "–", "languages"]]);
+  if (state.mode === "graphs") {
+    h += canvas("Calls per day", "c1") + canvas("Busiest hours", "c2") + canvas("Busiest days", "c3") + canvas("Language", "c4");
+    $("#main").innerHTML = h;
+    const [l, v] = byDay(calls, "call_time");
+    chart($("#c1"), {type: "bar", data: {labels: l, datasets: [{data: v, backgroundColor: accent()}]}});
+    const hr = Array.from({length: 24}, (_, i) => i), hv = hr.map(i => calls.filter(c => hourOf(c.call_time) === i).length);
+    chart($("#c2"), {type: "bar", data: {labels: hr.map(i => i + ":00"), datasets: [{data: hv, backgroundColor: accent()}]}});
+    const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    chart($("#c3"), {type: "bar", data: {labels: dn, datasets: [{data: dn.map(d => calls.filter(c => dayOf(c.call_time) === d).length), backgroundColor: accent()}]}});
+    chart($("#c4"), {type: "doughnut", legend: true, data: {labels: langs.map(x => x[0]), datasets: [{data: langs.map(x => x[1])}]}});
+    return;
+  }
+  h += `<div class="panel"><h2>Every call</h2>${calls.length ? "" : '<p class="muted">No calls in these dates.</p>'}` +
+    calls.map(c => `<div class="row" data-call="${c.id}"><div class="main"><div class="t">${esc(c.caller_name || c.phone || "Unknown caller")}</div>
+      <div class="s">${fmtDT(c.call_time)} · ${mins(c.duration_s)} · ${esc(c.summary || c.action_taken || "")}${c.got_busy ? " · got busy" : ""}</div></div>${c.test_call ? '<span class="pill">test</span>' : ""}${c.got_busy ? '<span class="pill warn">busy</span>' : grade(c)}</div>`).join("") + "</div>";
+  $("#main").innerHTML = h;
+}
+
+function viewBookings() {
+  const {books} = state.data;
+  const booked = books.filter(b => b.kind === "booked"), moved = books.filter(b => b.kind === "rescheduled"), cancelled = books.filter(b => b.kind === "cancelled");
+  const money = booked.reduce((a, b) => a + (+b.price_eur || 0), 0), lost = cancelled.reduce((a, b) => a + (+b.price_eur || 0), 0);
+  let h = cards([[booked.length, "bookings"], [moved.length, "moved"], [cancelled.length, "cancelled"], [eur(money), "booked (from prices)"], [eur(lost), "lost to cancellations"], [eur(money - lost), "net"]]);
+  const per = (key) => {
+    const m = new Map();
+    for (const b of books) { const k = b[key] || "–"; const r = m.get(k) || {b: 0, m: 0, c: 0, e: 0}; if (b.kind === "booked") { r.b++; r.e += +b.price_eur || 0; } if (b.kind === "rescheduled") r.m++; if (b.kind === "cancelled") { r.c++; r.e -= +b.price_eur || 0; } m.set(k, r); }
+    return [...m.entries()].sort((a, b) => b[1].b - a[1].b);
+  };
+  if (state.mode === "graphs") {
+    h += canvas("Bookings and cancellations per day", "b1") + canvas("Money per day (net)", "b2") + canvas("Per service", "b3") + canvas("Per staff member", "b4");
+    $("#main").innerHTML = h;
+    const [l, v1] = byDay(booked, "event_time"), [, v2] = byDay(cancelled, "event_time");
+    chart($("#b1"), {type: "bar", legend: true, data: {labels: l, datasets: [{label: "Booked", data: v1, backgroundColor: accent()}, {label: "Cancelled", data: v2, backgroundColor: "#f97066"}]}});
+    const [, m1] = byDay(booked, "event_time", b => +b.price_eur || 0), [, m2] = byDay(cancelled, "event_time", b => +b.price_eur || 0);
+    chart($("#b2"), {type: "line", data: {labels: l, datasets: [{data: m1.map((x, i) => x - m2[i]), borderColor: accent(), tension: .3}]}});
+    const ps = per("service"), pf = per("staff");
+    chart($("#b3"), {type: "bar", data: {labels: ps.map(x => x[0]), datasets: [{data: ps.map(x => x[1].b), backgroundColor: accent()}]}, options: {indexAxis: "y"}});
+    chart($("#b4"), {type: "bar", data: {labels: pf.map(x => x[0]), datasets: [{data: pf.map(x => x[1].b), backgroundColor: accent()}]}, options: {indexAxis: "y"}});
+    return;
+  }
+  const table = (title, rows) => `<div class="panel"><h2>${title}</h2><table><tr><th></th><th class="r">Booked</th><th class="r">Moved</th><th class="r">Cancelled</th><th class="r">Net €</th></tr>${rows.map(([k, r]) => `<tr><td>${esc(k)}</td><td class="r">${r.b}</td><td class="r">${r.m}</td><td class="r">${r.c}</td><td class="r">${eur(r.e)}</td></tr>`).join("")}</table></div>`;
+  h += table("Per service", per("service")) + table("Per staff member", per("staff"));
+  const word = {booked: "Booked", rescheduled: "Moved", cancelled: "Cancelled"};
+  h += `<div class="panel"><h2>Every booking change</h2>${books.length ? "" : '<p class="muted">None in these dates.</p>'}` + books.map(b => `<div class="row"><div class="main"><div class="t">${word[b.kind]}: ${esc(b.patient_name || b.phone || "")}</div>
+    <div class="s">${b.appointment_at ? "for " + fmtDT(b.appointment_at) : ""}${b.old_appointment_at ? " (was " + fmtDT(b.old_appointment_at) + ")" : ""} · ${esc(b.service || "")}${b.staff ? " · " + esc(b.staff) : ""} · on the phone ${fmtDT(b.event_time)}</div></div>
+    <span class="pill">${b.price_eur != null ? eur(b.price_eur) : ""}</span></div>`).join("") + "</div>";
+  $("#main").innerHTML = h;
+}
+
+function viewMessages() {
+  // not done first, urgent first among them, newest first within each
+  const msgs = [...state.data.msgs].sort((a, b) => (a.done - b.done) || ((b.kind === "urgent") - (a.kind === "urgent"))
+    || (new Date(b.created_at) - new Date(a.created_at)));
+  const open = msgs.filter(m => !m.done), urgent = msgs.filter(m => m.kind === "urgent");
+  let h = cards([[msgs.length, "messages"], [urgent.length, "urgent"], [open.length, "not done yet"]]);
+  if (state.mode === "graphs") {
+    h += canvas("Messages per day", "m1"); $("#main").innerHTML = h;
+    const [l, v1] = byDay(msgs.filter(m => m.kind === "callback"), "created_at"), [, v2] = byDay(urgent, "created_at");
+    chart($("#m1"), {type: "bar", legend: true, data: {labels: l, datasets: [{label: "Call back", data: v1, backgroundColor: accent()}, {label: "Urgent", data: v2, backgroundColor: "#f97066"}]}, options: {scales: {x: {stacked: true}, y: {stacked: true}}}});
+    return;
+  }
+  h += `<div class="panel"><h2>Every message</h2>${msgs.length ? "" : '<p class="muted">No messages in these dates.</p>'}` + msgs.map(m => `<div class="row" style="cursor:default"><div class="main">
+    <div class="t">${m.kind === "urgent" ? '<span class="pill bad">URGENT</span> ' : ""}${esc(m.caller_name || "")} · <a href="tel:${esc(m.phone)}">${esc(m.phone || "")}</a></div>
+    <div class="s" style="white-space:normal">${esc(m.body || "")}${m.backup ? "<br>Backup: " + esc(m.backup) : ""}</div>
+    <div class="muted small">${fmtDT(m.created_at)}${m.done ? ` · done by ${esc(m.done_by || "?")}, ${fmtDT(m.done_at)}` : ""}</div></div>
+    <label class="tick"><input type="checkbox" data-msg="${m.id}" ${m.done ? "checked" : ""}> Done</label></div>`).join("") + "</div>";
+  $("#main").innerHTML = h;
+}
+
+function viewClients() {
+  const {clients, calls, a, b} = state.data;
+  const newOnes = clients.filter(c => new Date(c.created_at) >= a && new Date(c.created_at) <= b);
+  const phones = new Set(clients.filter(c => new Date(c.created_at) < a).map(c => c.phone));
+  const callers = [...new Set(calls.map(c => c.phone).filter(Boolean))];
+  const returning = callers.filter(p => phones.has(p)).length;
+  let h = cards([[newOnes.length, "new clients"], [returning, "returning callers"], [callers.length - returning, "new callers"], [clients.length, "clients in total"]]);
+  if (state.mode === "graphs") {
+    h += canvas("New clients per day", "k1") + canvas("New vs returning callers", "k2"); $("#main").innerHTML = h;
+    const [l, v] = byDay(newOnes, "created_at");
+    chart($("#k1"), {type: "bar", data: {labels: l, datasets: [{data: v, backgroundColor: accent()}]}});
+    chart($("#k2"), {type: "doughnut", legend: true, data: {labels: ["Returning", "New"], datasets: [{data: [returning, callers.length - returning]}]}});
+    return;
+  }
+  h += `<div class="panel"><h2>Clients</h2>` + clients.map(c => `<div class="row" data-client="${c.id}"><div class="main"><div class="t">${esc(c.name)}${newOnes.includes(c) ? ' <span class="pill ok">new</span>' : ""}</div>
+    <div class="s">${esc(c.phone)} · ${c.total_visits || 0} visit(s)${c.last_service ? " · last: " + esc(c.last_service) : ""}${c.last_appointment ? " " + fmtD(c.last_appointment) : ""}</div></div></div>`).join("") + "</div>";
+  $("#main").innerHTML = h;
+}
+
+function viewGrades() {
+  const graded = state.data.calls.filter(c => c.qa_result != null);
+  const well = graded.filter(c => c.qa_result === "Pass");
+  const notWell = graded.filter(c => c.qa_result !== "Pass");
+  let h = cards([[`${well.length} of ${graded.length}`, "handled well"], [graded.length ? Math.round(100 * well.length / graded.length) + "%" : "–", "handled well"],
+    [graded.length ? Math.round(graded.reduce((a, c) => a + (c.qa_score || 0), 0) / graded.length) : "–", "average grade"]]);
+  if (state.mode === "graphs") {
+    h += canvas("Average grade per day", "g1") + canvas("Handled well vs not, per day", "g2"); $("#main").innerHTML = h;
+    const [l, sum] = byDay(graded, "call_time", c => c.qa_score || 0), [, n] = byDay(graded, "call_time");
+    chart($("#g1"), {type: "line", data: {labels: l, datasets: [{data: sum.map((s, i) => n[i] ? Math.round(s / n[i]) : null), borderColor: accent(), tension: .3, spanGaps: true}]}, options: {scales: {y: {min: 0, max: 100}}}});
+    const [, w] = byDay(well, "call_time"), [, nw] = byDay(notWell, "call_time");
+    chart($("#g2"), {type: "bar", legend: true, data: {labels: l, datasets: [{label: "Handled well", data: w, backgroundColor: accent()}, {label: "Not", data: nw, backgroundColor: "#f97066"}]}, options: {scales: {x: {stacked: true}, y: {stacked: true}}}});
+    return;
+  }
+  h += `<div class="panel"><h2>Calls not handled well</h2>${notWell.length ? "" : '<p class="muted">None in these dates.</p>'}` + notWell.map(c => `<div class="row" data-call="${c.id}"><div class="main"><div class="t">${esc(c.caller_name || c.phone || "Unknown caller")} · ${fmtDT(c.call_time)}</div>
+    <div class="s" style="white-space:normal">${esc(whatWentWrong(c.qa_notes))}</div></div>${grade(c)}</div>`).join("") + "</div>";
+  $("#main").innerHTML = h;
+}
+function whatWentWrong(notes) {
+  const lines = String(notes || "").split("\n").filter(l => /\(-\d+\)|fail|did not|didn't|wrong|missing|premature|should/i.test(l));
+  return (lines.length ? lines : String(notes || "").split("\n")).slice(0, 3).join(" · ");
+}
+
+// ---------- tap a call / client ----------
+$("#main").addEventListener("click", async e => {
+  const cb = e.target.closest("input[data-msg]");
+  if (cb) { e.preventDefault(); return askTick(cb); }
+  const r = e.target.closest("[data-call]"); if (r) return openCall(r.dataset.call);
+  const k = e.target.closest("[data-client]"); if (k) return openClient(k.dataset.client);
+});
+async function openCall(id) {
+  const c = state.data.calls.find(x => x.id === id);
+  dlg(`<h2 style="margin-top:0">${esc(c.caller_name || c.phone || "Unknown caller")}</h2><p class="muted">${fmtDT(c.call_time)} · ${mins(c.duration_s)} · ${esc(c.action_taken || "")}</p><p>${grade(c)}</p>
+    <p><b>Summary:</b> ${esc(c.summary || c.action_taken || "–")}</p>
+    ${c.recording_path ? `<audio controls preload="none" style="width:100%" id="rec"></audio>` : '<p class="muted">Recording: not available for this call yet.</p>'}
+    <h3>How it went</h3><pre>${esc(c.qa_notes || "Not graded.")}</pre><h3>Transcript</h3><pre id="tx">Loading…</pre>`, [["Close", null]]);
+  const {data} = await sb.from("call_log").select("transcript").eq("id", id).single();
+  $("#tx").textContent = (data && data.transcript || "No transcript.").split("\n").filter(l => !/^\[(tool|call)/.test(l)).join("\n");
+  if (c.recording_path) {
+    const {data: s} = await sb.storage.from("recordings").createSignedUrl(c.recording_path, 600);
+    if (s) $("#rec").src = s.signedUrl;
+  }
+}
+function openClient(id) {
+  const c = state.data.clients.find(x => x.id === id);
+  const calls = state.data.calls.filter(x => x.phone === c.phone), books = state.data.books.filter(x => x.phone === c.phone);
+  dlg(`<h2 style="margin-top:0">${esc(c.name)}</h2><p class="muted">${esc(c.phone)} · client since ${fmtD(c.created_at)} · ${c.total_visits || 0} visit(s)</p>
+    <h3>Bookings (these dates)</h3>${books.map(b => `<div>${esc(b.kind)} · ${b.appointment_at ? fmtDT(b.appointment_at) : ""} · ${esc(b.service || "")}</div>`).join("") || '<p class="muted">None.</p>'}
+    <h3>Calls (these dates)</h3>${calls.map(x => `<div>${fmtDT(x.call_time)} · ${esc(x.action_taken || "")}</div>`).join("") || '<p class="muted">None.</p>'}`, [["Close", null]]);
+}
+function dlg(body, buttons) {
+  $("#dlgBody").innerHTML = body; $("#dlgFoot").innerHTML = "";
+  return new Promise(res => {
+    for (const [label, val, primary] of buttons) {
+      const b = document.createElement("button"); b.className = "btn small" + (primary ? "" : " ghost"); b.textContent = label;
+      b.onclick = () => { $("#dlg").close(); res(val); }; $("#dlgFoot").appendChild(b);
+    }
+    $("#dlg").showModal();
+  });
+}
+async function askTick(cb) {
+  const m = state.data.msgs.find(x => x.id === cb.dataset.msg), to = !m.done;
+  const yes = await dlg(`<h2 style="margin-top:0">${to ? "Mark this as done?" : "Mark this as NOT done?"}</h2><p>${esc(m.caller_name || "")} – ${esc((m.body || "").slice(0, 120))}</p>`, [["No", false], ["Yes", true, true]]);
+  if (!yes) return;
+  const {error} = await sb.rpc("set_message_done", {p_id: m.id, p_done: to});
+  if (error) { alertBox("Could not save that: " + error.message); return; }
+  const {data} = await sb.from("messages").select("*").eq("id", m.id).single();
+  Object.assign(m, data); render();
+}
+function alertBox(t) { dlg(`<p>${esc(t)}</p>`, [["OK", null, true]]); }
+
+// ---------- live light ----------
+async function live() {
+  // one row per line (copy of Maria); a row left "on a call" for over 30 min is stale (a copy that died mid-call)
+  const {data} = await sb.from("line_copies").select("active,updated_at");
+  const n = (data || []).filter(r => r.active && (Date.now() - new Date(r.updated_at)) < 30 * 60 * 1000).length;
+  const onCall = n > 0;
+  $("#liveDot").classList.toggle("on", onCall);
+  $("#liveText").textContent = onCall ? (n > 1 ? `On ${n} calls` : "On a call") : "Free";
+}
+
+// ---------- start ----------
+async function start() {
+  const {data: {session}} = await sb.auth.getSession();
+  if (!session) { show("loginView"); return; }
+  if (location.hash.includes("type=recovery")) { show("resetView"); return; }
+  const {data: m} = await sb.from("portal_members").select("business,display_name").maybeSingle();
+  me = m; show("appView");
+  $("#bizName").textContent = m ? (m.business === "smile-better" ? "Smile Better" : m.business) : "Maria";
+  load(); live(); setInterval(live, 15000);
+}
+start();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
