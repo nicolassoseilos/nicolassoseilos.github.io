@@ -16,10 +16,15 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
 header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px calc(10px);padding-top:max(10px,env(safe-area-inset-top))}
+.hin{max-width:868px;margin:0 auto}
 .top{display:flex;align-items:center;gap:10px}
-.top h1{font-size:17px;margin:0;flex:1}
-.live{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
-.dot{width:11px;height:11px;border-radius:50%;background:#9aa4b1}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
+.top h1{font-size:18px;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top h1 small{display:block;font-size:12px;font-weight:500;color:var(--mute)}
+.live{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--mute);background:var(--chip);border-radius:999px;padding:6px 12px 6px 10px;white-space:nowrap}
+.live.on{background:#dcfce7;color:#166534}
+@media (prefers-color-scheme:dark){.live.on{background:#14532d;color:#bbf7d0}}
+.dot{width:12px;height:12px;border-radius:50%;background:#9aa4b1;flex:none}
 .dot.on{background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:pulse 1.6s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
 nav.tabs{display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
@@ -35,6 +40,13 @@ main{padding:12px 16px;max-width:900px;margin:0 auto}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
 .card .n{font-size:24px;font-weight:650}
+.cards .card:first-child{background:var(--accent);border-color:var(--accent);color:#fff}
+.cards .card:first-child .l{color:rgba(255,255,255,.85)}
+a{color:var(--accent)}
+.live .short{display:none}
+@media (max-width:520px){.live .long{display:none}.live .short{display:inline}}
+.langbtn{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 10px;font-size:13px;font-weight:600}
+.signout{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;font-size:14px;margin-left:6px}
 .card .l{font-size:12px;color:var(--mute)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .panel h2{font-size:15px;margin:0 0 8px}
@@ -65,6 +77,15 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlgfoot{display:flex;gap:8px;justify-content:flex-end;padding:10px 16px;border-top:1px solid var(--line)}
 .tick{display:flex;align-items:center;gap:8px}
 .tick input{width:22px;height:22px;accent-color:var(--accent)}
+.fbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.fbar input[type=search]{flex:1 1 100%;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:16px}
+#fsel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 0;min-width:0}
+#fsel:empty{display:none}
+@media (min-width:700px){.fbar{flex-wrap:nowrap}.fbar input[type=search]{flex:0 1 300px}}
+.fbar select{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 8px;font-size:14px;max-width:60vw}
+.fbar select.set{border-color:var(--accent);color:var(--accent);font-weight:600}
+.fbar .clear{flex:none;border:0;background:transparent;color:var(--accent);font-size:14px;padding:6px 4px}
+.showing{margin:-4px 0 10px}
 .hide{display:none!important}
 .small{font-size:12px}
 </style>
@@ -93,10 +114,12 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 </div>
 
 <div id="appView" class="hide">
-<header>
+<header><div class="hin">
   <div class="top">
-    <h1 id="bizName">Maria</h1>
-    <div class="live" title="Lit whenever Maria is on a call on any line"><span class="dot" id="liveDot"></span><span id="liveText">…</span></div>
+    <div class="logo" id="bizLogo" aria-hidden="true">M</div>
+    <h1><span id="bizName">Maria</span><small>Maria, your receptionist</small></h1>
+    <button type="button" class="langbtn" id="langBtn" aria-label="Ελληνικά / English">ΕΛ</button>
+    <div class="live" id="live" title="Lit whenever Maria is on a call on any line"><span class="dot" id="liveDot"></span><span id="liveText">…</span></div>
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="calls" class="on">Calls</button>
@@ -104,6 +127,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     <button data-tab="messages">Messages</button>
     <button data-tab="clients">Clients</button>
     <button data-tab="grades">How calls went</button>
+    <button data-tab="plan" class="hide" id="planTab">Plan &amp; bills</button>
+    <button data-tab="myday" class="hide" id="mydayTab">My day</button>
   </nav>
   <div class="bar">
     <div class="seg" id="ranges">
@@ -113,9 +138,14 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     <div class="custom" id="customBox"><input type="date" id="from"> – <input type="date" id="to"></div>
     <div class="seg" id="modes"><button data-m="list" class="on">List</button><button data-m="graphs">Graphs</button></div>
   </div>
-</header>
+  <div class="fbar" id="fbar">
+    <input type="search" id="q" placeholder="Search name, surname, phone…" autocomplete="off" enterkeyhint="search" aria-label="Search">
+    <span id="fsel"></span>
+    <button class="clear hide" id="fclear" type="button">Clear</button>
+  </div>
+</div></header>
 <main id="main"><p class="muted">Loading…</p></main>
-<p class="muted small" style="text-align:center;padding:0 16px 20px">View only. <a href="#" id="signOut">Sign out</a></p>
+<p class="muted small" style="text-align:center;padding:0 16px 20px">View only. <button type="button" class="signout" id="signOut">Sign out</button></p>
 </div>
 
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div><div class="dlgfoot" id="dlgFoot"></div></dialog>
@@ -131,14 +161,17 @@ const sb = supabase.createClient(CFG.url, CFG.key, {auth: {persistSession: true,
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TZ = "Asia/Nicosia";
-const fmtDT = d => new Date(d).toLocaleString("en-GB", {timeZone: TZ, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
-const fmtD = d => new Date(d).toLocaleDateString("en-GB", {timeZone: TZ, day: "numeric", month: "short"});
+let LANGSEL = "en";
+try { LANGSEL = localStorage.getItem("maria-lang") === "el" ? "el" : "en"; } catch (e) {}
+const LOC = LANGSEL === "el" ? "el-GR" : "en-GB";
+const fmtDT = d => new Date(d).toLocaleString(LOC, {timeZone: TZ, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
+const fmtD = d => new Date(d).toLocaleDateString(LOC, {timeZone: TZ, day: "numeric", month: "short"});
 const eur = n => "€" + Math.round(n || 0).toLocaleString("en-GB");
 const mins = s => s == null ? "–" : (s >= 60 ? Math.floor(s / 60) + "m " : "") + (s % 60) + "s";
 const LANG = {el: "Greek", en: "English", ru: "Russian", greek: "Greek", english: "English"};
 
-let state = {tab: "calls", range: "7", mode: "list", data: null, charts: []};
-let me = null;
+let state = {tab: "calls", range: "7", mode: "list", data: null, charts: [], q: "", f: {calls: {}, bookings: {}, messages: {}, clients: {}, grades: {}, myday: {}}};
+let me = null, ROLE = "owner";
 
 // ---------- sign in ----------
 function show(id) { for (const v of ["loginView", "resetView", "appView"]) $("#" + v).classList.toggle("hide", v !== id); }
@@ -147,6 +180,7 @@ $("#loginForm").addEventListener("submit", async e => {
   e.preventDefault(); $("#loginErr").textContent = "";
   const {error} = await sb.auth.signInWithPassword({email: $("#email").value.trim(), password: $("#password").value});
   if (error) { $("#loginErr").textContent = "Email or password not right."; return; }
+  sb.rpc("note_login", {p_agent: navigator.userAgent}).then(() => {}, () => {});
   start();
 });
 $("#forgotBtn").addEventListener("click", async () => {
@@ -165,7 +199,7 @@ $("#signOut").addEventListener("click", async e => { e.preventDefault(); await s
 sb.auth.onAuthStateChange(ev => { if (ev === "PASSWORD_RECOVERY") show("resetView"); });
 
 // ---------- controls ----------
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.tab = b.dataset.tab; on("#tabs", b); render(); });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.tab = b.dataset.tab; on("#tabs", b); render(); window.scrollTo(0, 0); });
 $("#ranges").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return; state.range = b.dataset.r; on("#ranges", b);
   $("#customBox").classList.toggle("on", state.range === "custom");
@@ -195,18 +229,47 @@ async function all(q) {
     out = out.concat(data); if (data.length < 1000) return out; from += 1000;
   }
 }
+// The Greek summary and the no-booking reason are read once the database has them; before
+// that the page asks without them (Q7 a, 4 Nov).
+let EXTRA_COLS = true;
+async function callsIn(A, B) {
+  const q = cols => () => sb.from("call_log").select(cols).gte("call_time", A).lte("call_time", B).order("call_time", {ascending: false});
+  if (EXTRA_COLS) {
+    try { return await all(q("id,call_time,phone,caller_name,action_taken,service_requested,call_language,duration_s,qa_result,qa_score,qa_notes,staff,summary,got_busy,recording_path,test_call,summary_el,no_booking_reason")); } catch (e) { EXTRA_COLS = false; }
+  }
+  return all(q("id,call_time,phone,caller_name,action_taken,service_requested,call_language,duration_s,qa_result,qa_score,qa_notes,staff,summary,got_busy,recording_path,test_call"));
+}
+const summaryOf = c => (LANGSEL === "el" && c.summary_el) || c.summary;
+async function loadStaff() {
+  const [a, b] = span(), A = a.toISOString(), B = b.toISOString();
+  const day = await all(() => sb.from("my_day").select("*").gte("event_time", A).lte("event_time", B).order("event_time", {ascending: false}));
+  state.data = {calls: [], books: day, msgs: [], clients: [], a, b};
+}
+async function loadPlan() {
+  const [{data: bill}, {data: inv}, {data: logins}] = await Promise.all([
+    sb.from("billing").select("*").maybeSingle(),
+    sb.from("invoices").select("*").order("issued_on", {ascending: false}),
+    sb.from("portal_logins").select("email,at,agent").order("at", {ascending: false}).limit(50)]);
+  state.plan = {bill, inv: inv || [], logins: logins || []};
+}
 async function load() {
+  if (ROLE === "staff") {
+    $("#main").innerHTML = '<p class="muted">Loading…</p>';
+    try { await loadStaff(); render(); } catch (e) { $("#main").innerHTML = `<div class="panel"><p class="err">Could not load: ${esc(e.message || e)}</p></div>`; }
+    return;
+  }
   const [a, b] = span();
   $("#main").innerHTML = '<p class="muted">Loading…</p>';
   try {
     const A = a.toISOString(), B = b.toISOString();
     const [calls, books, msgs, clients] = await Promise.all([
-      all(() => sb.from("call_log").select("id,call_time,phone,caller_name,action_taken,service_requested,call_language,duration_s,qa_result,qa_score,qa_notes,staff,summary,got_busy,recording_path,test_call").gte("call_time", A).lte("call_time", B).order("call_time", {ascending: false})),
+      callsIn(A, B),
       all(() => sb.from("bookings_log").select("*").gte("event_time", A).lte("event_time", B).order("event_time", {ascending: false})),
       all(() => sb.from("messages").select("*").gte("created_at", A).lte("created_at", B).order("created_at", {ascending: false})),
       all(() => sb.from("clients").select("id,name,phone,total_visits,last_service,last_appointment,created_at,is_dependent").order("created_at", {ascending: false})),
     ]);
     state.data = {calls, books, msgs, clients, a, b};
+    if (!$("#planTab").classList.contains("hide")) await loadPlan().catch(() => {});
     render();
   } catch (e) {
     $("#main").innerHTML = `<div class="panel"><p class="err">Could not load: ${esc(e.message || e)}</p></div>`;
@@ -219,6 +282,11 @@ function chart(el, cfg) {
   const css = getComputedStyle(document.documentElement);
   Chart.defaults.color = css.getPropertyValue("--mute").trim();
   Chart.defaults.borderColor = css.getPropertyValue("--line").trim();
+  if (LANGSEL === "el" && cfg.data) {  // chart words in Greek too (Q6 k)
+    const W = Object.assign({}, EL, {"Mon": "Δευ", "Tue": "Τρί", "Wed": "Τετ", "Thu": "Πέμ", "Fri": "Παρ", "Sat": "Σάβ", "Sun": "Κυρ", "Cancelled": "Ακυρώσεις", "Booked": "Κλεισμένα", "Urgent": "Επείγοντα"});
+    if (cfg.data.labels) cfg.data.labels = cfg.data.labels.map(l => W[l] || l);
+    for (const d of cfg.data.datasets || []) if (d.label) d.label = W[d.label] || d.label;
+  }
   cfg.options = Object.assign({responsive: true, maintainAspectRatio: false, plugins: {legend: {display: cfg.legend || false}}}, cfg.options || {});
   const c = new Chart(el, cfg); state.charts.push(c); return c;
 }
@@ -241,20 +309,88 @@ function grade(c) {
 function hourOf(d) { return +new Date(d).toLocaleString("en-GB", {timeZone: TZ, hour: "2-digit", hour12: false}); }
 function dayOf(d) { return new Date(d).toLocaleDateString("en-GB", {timeZone: TZ, weekday: "short"}); }
 
+// ---------- search + filters (Q2, 4 Nov) ----------
+// One search box for every page: name, surname, phone (any part, with or without +357 / spaces),
+// Greek with or without accents. Plus a few drop-down filters per page, built from what is in the
+// chosen dates. Everything on the page (the figures at the top, the lists, the graphs) follows them.
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const digits = s => String(s ?? "").replace(/\D/g, "");
+function matches(q, fields) {
+  q = q.trim(); if (!q) return true;
+  const qd = digits(q);
+  if (qd.length >= 4 && /^[\d\s+()\-.]+$/.test(q)) return fields.some(f => digits(f).includes(qd.replace(/^00/, "")));
+  const text = norm(fields.join(" · "));
+  return norm(q).split(/\s+/).filter(Boolean).every(w => text.includes(w) || (digits(w).length >= 3 && fields.some(f => digits(f).includes(digits(w)))));
+}
+const RESULT = {"Booked": "Booked", "Rescheduled": "Moved", "Cancelled": "Cancelled", "Question(s) only": "Questions only", "No action": "Nothing done"};
+const callResult = c => c.got_busy ? "Got busy" : (RESULT[c.action_taken] || c.action_taken || "Other");
+const callGrade = c => c.got_busy ? "" : c.qa_result == null ? "Not graded" : c.qa_result === "Pass" ? "Handled well" : "Not handled well";
+const callLang = c => LANG[(c.call_language || "").toLowerCase()] || c.call_language || "";
+const callLen = c => c.duration_s == null || c.got_busy ? "" : c.duration_s < 60 ? "Under 1 min" : c.duration_s < 180 ? "1–3 min" : "Over 3 min";
+const KIND = {booked: "Booked", rescheduled: "Moved", cancelled: "Cancelled"};
+const isNewClient = c => new Date(c.created_at) >= state.data.a && new Date(c.created_at) <= state.data.b;
+const FILTERS = {
+  myday: {src: "books", text: b => [b.patient_name, b.phone, b.service],
+    by: [["kind", "Change", b => KIND[b.kind] || b.kind], ["service", "Service", b => b.service]]},
+  calls: {src: "calls", text: c => [c.caller_name, c.phone, c.summary, c.service_requested, c.staff],
+    by: [["result", "Result", callResult], ["lang", "Language", callLang], ["grade", "Grade", callGrade], ["len", "Length", callLen],
+         ["service", "Service", c => c.service_requested && c.service_requested !== "Unknown" ? c.service_requested : ""]]},
+  grades: {src: "calls", text: c => [c.caller_name, c.phone, c.summary, c.qa_notes],
+    by: [["result", "Result", callResult], ["lang", "Language", callLang],
+         ["score", "Grade", c => c.qa_score == null ? "" : c.qa_score >= 90 ? "90–100" : c.qa_score >= 70 ? "70–89" : c.qa_score >= 50 ? "50–69" : "Under 50"]]},
+  bookings: {src: "books", text: b => [b.patient_name, b.phone, b.service, b.staff],
+    by: [["kind", "Change", b => KIND[b.kind] || b.kind], ["service", "Service", b => b.service], ["staff", "Staff", b => b.staff]]},
+  messages: {src: "msgs", text: m => [m.caller_name, m.phone, m.body, m.backup],
+    by: [["done", "Status", m => m.done ? "Done" : "Not done yet"], ["kind", "Type", m => m.kind === "urgent" ? "Urgent" : "Call back"]]},
+  clients: {src: "clients", text: c => [c.name, c.phone, c.last_service],
+    by: [["new", "Client", c => isNewClient(c) ? "New in these dates" : "From before"],
+         ["visits", "Visits", c => !c.total_visits ? "No visits yet" : c.total_visits === 1 ? "1 visit" : "2+ visits"]]},
+};
+// the rows of one kind ("calls", "books", "msgs", "clients") after this page's search + filters
+function F(src) {
+  const spec = FILTERS[state.tab], rows = state.data[src];
+  if (!spec || spec.src !== src) return rows;
+  const set = state.f[state.tab];
+  return rows.filter(r => matches(state.q, spec.text(r)) && spec.by.every(([k, , fn]) => !set[k] || fn(r) === set[k]));
+}
+function filtering() { return !!state.q.trim() || Object.values(state.f[state.tab] || {}).some(Boolean); }
+function renderFilters() {
+  const spec = FILTERS[state.tab];
+  $("#fbar").classList.toggle("hide", !spec);
+  if (!spec) return;
+  const set = state.f[state.tab], rows = state.data[spec.src];
+  $("#fsel").innerHTML = spec.by.map(([k, label, fn]) => {
+    const vals = count(rows, fn).map(x => x[0]);
+    if (set[k] && !vals.includes(set[k])) vals.unshift(set[k]);
+    if (vals.length < 2 && !set[k]) return "";
+    return `<select data-f="${k}" class="${set[k] ? "set" : ""}" aria-label="${esc(label)}"><option value="">${esc(label)}: all</option>${vals.map(v => `<option value="${esc(v)}"${v === set[k] ? " selected" : ""}>${esc(v)}</option>`).join("")}</select>`;
+  }).join("");
+  $("#fclear").classList.toggle("hide", !filtering());
+}
+function showing(shown, total, what) {
+  return filtering() ? `<p class="muted showing">Showing ${shown} of ${total} ${what}. <a href="#" data-clear="1">Show all</a></p>` : "";
+}
+function clearFilters() { state.q = ""; $("#q").value = ""; state.f[state.tab] = {}; render(); }
+let qTimer = null;
+$("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = $("#q").value; render(); }, 180); });
+$("#fsel").addEventListener("change", e => { const s = e.target.closest("select"); if (!s) return; state.f[state.tab][s.dataset.f] = s.value; render(); });
+$("#fclear").addEventListener("click", clearFilters);
+
 // ---------- views ----------
 function render() {
   killCharts();
   if (!state.data) return;
-  ({calls: viewCalls, bookings: viewBookings, messages: viewMessages, clients: viewClients, grades: viewGrades})[state.tab]();
+  renderFilters();
+  ({calls: viewCalls, bookings: viewBookings, messages: viewMessages, clients: viewClients, grades: viewGrades, plan: viewPlan, myday: viewMyDay})[state.tab]();
 }
 
 function viewCalls() {
-  const {calls} = state.data;
+  const calls = F("calls");
   const answered = calls.filter(c => !c.got_busy), busy = calls.filter(c => c.got_busy);
   const durs = answered.map(c => c.duration_s).filter(x => x != null);
   const avg = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null;
   const hours = count(calls, c => hourOf(c.call_time)), langs = count(calls, c => LANG[(c.call_language || "").toLowerCase()] || c.call_language);
-  let h = cards([[calls.length, "calls"], [mins(avg), "average length"], [busy.length, "callers got busy"],
+  let h = showing(calls.length, state.data.calls.length, "calls") + cards([[calls.length, "calls"], [mins(avg), "average length"], [busy.length, "callers got busy"],
     [hours[0] ? hours[0][0] + ":00" : "–", "busiest hour"], [langs.map(([k, v]) => `${k} ${v}`).join(", ") || "–", "languages"]]);
   if (state.mode === "graphs") {
     h += canvas("Calls per day", "c1") + canvas("Busiest hours", "c2") + canvas("Busiest days", "c3") + canvas("Language", "c4");
@@ -262,23 +398,57 @@ function viewCalls() {
     const [l, v] = byDay(calls, "call_time");
     chart($("#c1"), {type: "bar", data: {labels: l, datasets: [{data: v, backgroundColor: accent()}]}});
     const hr = Array.from({length: 24}, (_, i) => i), hv = hr.map(i => calls.filter(c => hourOf(c.call_time) === i).length);
-    chart($("#c2"), {type: "bar", data: {labels: hr.map(i => i + ":00"), datasets: [{data: hv, backgroundColor: accent()}]}});
+    chart($("#c2"), {type: "bar", data: {labels: hr.map(i => i + ":00"), datasets: [{data: hv, backgroundColor: accent()}]},
+      options: {scales: {x: {ticks: {maxRotation: 0, autoSkip: false, callback: (v, i) => i % 3 ? "" : hr[i] + ":00"}}}}});
     const dn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     chart($("#c3"), {type: "bar", data: {labels: dn, datasets: [{data: dn.map(d => calls.filter(c => dayOf(c.call_time) === d).length), backgroundColor: accent()}]}});
     chart($("#c4"), {type: "doughnut", legend: true, data: {labels: langs.map(x => x[0]), datasets: [{data: langs.map(x => x[1])}]}});
     return;
   }
-  h += `<div class="panel"><h2>Every call</h2>${calls.length ? "" : '<p class="muted">No calls in these dates.</p>'}` +
+  h += `<div class="panel"><h2>Every call</h2>${calls.length ? "" : (filtering() ? '<p class="muted">No calls match.</p>' : '<p class="muted">No calls in these dates.</p>')}` +
     calls.map(c => `<div class="row" data-call="${c.id}"><div class="main"><div class="t">${esc(c.caller_name || c.phone || "Unknown caller")}</div>
-      <div class="s">${fmtDT(c.call_time)} · ${mins(c.duration_s)} · ${esc(c.summary || c.action_taken || "")}${c.got_busy ? " · got busy" : ""}</div></div>${c.test_call ? '<span class="pill">test</span>' : ""}${c.got_busy ? '<span class="pill warn">busy</span>' : grade(c)}</div>`).join("") + "</div>";
+      <div class="s">${fmtDT(c.call_time)} · ${mins(c.duration_s)} · ${esc(summaryOf(c) || c.action_taken || "")}${c.got_busy ? " · got busy" : ""}</div></div>${c.test_call ? '<span class="pill">test</span>' : ""}${c.got_busy ? '<span class="pill warn">busy</span>' : grade(c)}</div>`).join("") + "</div>";
   $("#main").innerHTML = h;
 }
 
+const WHY = {"slot full": "No free time that suited them", "staff member full": "The person they wanted was full",
+  "too expensive": "Too expensive for them", "service not offered": "Service not offered", "hung up": "Hung up before it was settled", "other": "Other reason"};
+function whyNoBooking() {
+  // from the calls in these dates (search and filters of this page do not apply: they are about bookings)
+  if (!EXTRA_COLS) return "";
+  const why = count(state.data.calls.filter(c => c.no_booking_reason && c.no_booking_reason !== "none"), "no_booking_reason");
+  const total = why.reduce((a, x) => a + x[1], 0);
+  return `<div class="panel"><h2>Why people couldn't book</h2>${total ? `<table>${why.map(([k, n]) => `<tr><td>${esc(WHY[k] || k)}</td><td class="r">${n}</td></tr>`).join("")}</table>`
+    : '<p class="muted">Everyone who wanted an appointment got one.</p>'}</div>`;
+}
+function viewMyDay() {
+  const books = F("books");
+  const upcoming = [...books].filter(b => b.kind !== "cancelled" && b.appointment_at).sort((x, y) => new Date(x.appointment_at) - new Date(y.appointment_at));
+  const word = {booked: "Booked", rescheduled: "Moved", cancelled: "Cancelled"};
+  let h = showing(books.length, state.data.books.length, "booking changes") + cards([[books.filter(b => b.kind === "booked").length, "booked for you"],
+    [books.filter(b => b.kind === "rescheduled").length, "moved"], [books.filter(b => b.kind === "cancelled").length, "cancelled"]]);
+  h += `<div class="panel"><h2>Your appointments booked by Maria</h2>${upcoming.length ? "" : '<p class="muted">None in these dates.</p>'}` +
+    upcoming.map(b => `<div class="row" style="cursor:default"><div class="main"><div class="t">${fmtDT(b.appointment_at)} · ${esc(b.patient_name || "")}</div>
+      <div class="s">${esc(b.service || "")} · ${word[b.kind]} on the phone ${fmtDT(b.event_time)}</div></div></div>`).join("") + "</div>";
+  h += `<div class="panel"><h2>Cancelled</h2>${books.filter(b => b.kind === "cancelled").map(b => `<div class="s">${b.appointment_at ? fmtDT(b.appointment_at) : ""} · ${esc(b.patient_name || "")} · ${esc(b.service || "")}</div>`).join("") || '<p class="muted">None.</p>'}</div>`;
+  $("#main").innerHTML = h;
+}
+function viewPlan() {
+  const {bill, inv, logins} = state.plan || {inv: [], logins: []};
+  let h = `<div class="panel"><h2>Your plan</h2>${bill ? `<table><tr><td>Plan</td><td class="r">${esc(bill.plan || "–")}</td></tr>
+    <tr><td>Price</td><td class="r">${bill.price_eur != null ? eur(bill.price_eur) + " / " + esc(bill.billed_every || "month") : "–"}</td></tr>
+    <tr><td>Next bill</td><td class="r">${bill.next_bill_on ? fmtD(bill.next_bill_on) : "–"}</td></tr></table>${bill.note ? `<p class="muted">${esc(bill.note)}</p>` : ""}`
+    : '<p class="muted">No plan details yet.</p>'}</div>`;
+  h += `<div class="panel"><h2>Invoices</h2>${inv.length ? `<table><tr><th>Date</th><th>Period</th><th class="r">Amount</th><th class="r">Status</th></tr>${inv.map(i => `<tr><td>${fmtD(i.issued_on)}</td><td>${esc(i.period || "")}</td><td class="r">${eur(i.amount_eur)}</td><td class="r">${i.status === "paid" ? '<span class="pill ok">Paid</span>' : '<span class="pill warn">Due</span>'}</td></tr>`).join("")}</table>` : '<p class="muted">No invoices yet.</p>'}</div>`;
+  if (ROLE === "owner") h += `<div class="panel"><h2>Who signed in</h2>${logins.length ? logins.map(l => `<div class="s">${fmtDT(l.at)} · ${esc(l.email || "")} · ${esc(agentName(l.agent))}</div>`).join("") : '<p class="muted">No sign-ins noted yet.</p>'}</div>`;
+  $("#main").innerHTML = h;
+}
+const agentName = a => /iPhone|iPad/.test(a || "") ? "iPhone/iPad" : /Android/.test(a || "") ? "Android phone" : /Windows/.test(a || "") ? "Windows computer" : /Mac/.test(a || "") ? "Mac" : "browser";
 function viewBookings() {
-  const {books} = state.data;
+  const books = F("books");
   const booked = books.filter(b => b.kind === "booked"), moved = books.filter(b => b.kind === "rescheduled"), cancelled = books.filter(b => b.kind === "cancelled");
   const money = booked.reduce((a, b) => a + (+b.price_eur || 0), 0), lost = cancelled.reduce((a, b) => a + (+b.price_eur || 0), 0);
-  let h = cards([[booked.length, "bookings"], [moved.length, "moved"], [cancelled.length, "cancelled"], [eur(money), "booked (from prices)"], [eur(lost), "lost to cancellations"], [eur(money - lost), "net"]]);
+  let h = showing(books.length, state.data.books.length, "booking changes") + cards([[booked.length, "bookings"], [moved.length, "moved"], [cancelled.length, "cancelled"], [eur(money), "booked (from prices)"], [eur(lost), "lost to cancellations"], [eur(money - lost), "net"]]);
   const per = (key) => {
     const m = new Map();
     for (const b of books) { const k = b[key] || "–"; const r = m.get(k) || {b: 0, m: 0, c: 0, e: 0}; if (b.kind === "booked") { r.b++; r.e += +b.price_eur || 0; } if (b.kind === "rescheduled") r.m++; if (b.kind === "cancelled") { r.c++; r.e -= +b.price_eur || 0; } m.set(k, r); }
@@ -290,14 +460,14 @@ function viewBookings() {
     const [l, v1] = byDay(booked, "event_time"), [, v2] = byDay(cancelled, "event_time");
     chart($("#b1"), {type: "bar", legend: true, data: {labels: l, datasets: [{label: "Booked", data: v1, backgroundColor: accent()}, {label: "Cancelled", data: v2, backgroundColor: "#f97066"}]}});
     const [, m1] = byDay(booked, "event_time", b => +b.price_eur || 0), [, m2] = byDay(cancelled, "event_time", b => +b.price_eur || 0);
-    chart($("#b2"), {type: "line", data: {labels: l, datasets: [{data: m1.map((x, i) => x - m2[i]), borderColor: accent(), tension: .3}]}});
+    chart($("#b2"), {type: "line", data: {labels: l, datasets: [{data: m1.map((x, i) => x - m2[i]), borderColor: accent(), tension: 0, pointRadius: 3}]}, options: {scales: {y: {grace: "5%"}}}});
     const ps = per("service"), pf = per("staff");
     chart($("#b3"), {type: "bar", data: {labels: ps.map(x => x[0]), datasets: [{data: ps.map(x => x[1].b), backgroundColor: accent()}]}, options: {indexAxis: "y"}});
     chart($("#b4"), {type: "bar", data: {labels: pf.map(x => x[0]), datasets: [{data: pf.map(x => x[1].b), backgroundColor: accent()}]}, options: {indexAxis: "y"}});
     return;
   }
   const table = (title, rows) => `<div class="panel"><h2>${title}</h2><table><tr><th></th><th class="r">Booked</th><th class="r">Moved</th><th class="r">Cancelled</th><th class="r">Net €</th></tr>${rows.map(([k, r]) => `<tr><td>${esc(k)}</td><td class="r">${r.b}</td><td class="r">${r.m}</td><td class="r">${r.c}</td><td class="r">${eur(r.e)}</td></tr>`).join("")}</table></div>`;
-  h += table("Per service", per("service")) + table("Per staff member", per("staff"));
+  h += whyNoBooking() + table("Per service", per("service")) + table("Per staff member", per("staff"));
   const word = {booked: "Booked", rescheduled: "Moved", cancelled: "Cancelled"};
   h += `<div class="panel"><h2>Every booking change</h2>${books.length ? "" : '<p class="muted">None in these dates.</p>'}` + books.map(b => `<div class="row"><div class="main"><div class="t">${word[b.kind]}: ${esc(b.patient_name || b.phone || "")}</div>
     <div class="s">${b.appointment_at ? "for " + fmtDT(b.appointment_at) : ""}${b.old_appointment_at ? " (was " + fmtDT(b.old_appointment_at) + ")" : ""} · ${esc(b.service || "")}${b.staff ? " · " + esc(b.staff) : ""} · on the phone ${fmtDT(b.event_time)}</div></div>
@@ -307,10 +477,10 @@ function viewBookings() {
 
 function viewMessages() {
   // not done first, urgent first among them, newest first within each
-  const msgs = [...state.data.msgs].sort((a, b) => (a.done - b.done) || ((b.kind === "urgent") - (a.kind === "urgent"))
+  const msgs = [...F("msgs")].sort((a, b) => (a.done - b.done) || ((b.kind === "urgent") - (a.kind === "urgent"))
     || (new Date(b.created_at) - new Date(a.created_at)));
   const open = msgs.filter(m => !m.done), urgent = msgs.filter(m => m.kind === "urgent");
-  let h = cards([[msgs.length, "messages"], [urgent.length, "urgent"], [open.length, "not done yet"]]);
+  let h = showing(msgs.length, state.data.msgs.length, "messages") + cards([[msgs.length, "messages"], [urgent.length, "urgent"], [open.length, "not done yet"]]);
   if (state.mode === "graphs") {
     h += canvas("Messages per day", "m1"); $("#main").innerHTML = h;
     const [l, v1] = byDay(msgs.filter(m => m.kind === "callback"), "created_at"), [, v2] = byDay(urgent, "created_at");
@@ -319,19 +489,19 @@ function viewMessages() {
   }
   h += `<div class="panel"><h2>Every message</h2>${msgs.length ? "" : '<p class="muted">No messages in these dates.</p>'}` + msgs.map(m => `<div class="row" style="cursor:default"><div class="main">
     <div class="t">${m.kind === "urgent" ? '<span class="pill bad">URGENT</span> ' : ""}${esc(m.caller_name || "")} · <a href="tel:${esc(m.phone)}">${esc(m.phone || "")}</a></div>
-    <div class="s" style="white-space:normal">${esc(m.body || "")}${m.backup ? "<br>Backup: " + esc(m.backup) : ""}</div>
+    <div class="s" style="white-space:normal">${esc(m.body || "")}${m.backup ? "<br>Backup booked: " + esc(niceBackup(m.backup)) : ""}</div>
     <div class="muted small">${fmtDT(m.created_at)}${m.done ? ` · done by ${esc(m.done_by || "?")}, ${fmtDT(m.done_at)}` : ""}</div></div>
     <label class="tick"><input type="checkbox" data-msg="${m.id}" ${m.done ? "checked" : ""}> Done</label></div>`).join("") + "</div>";
   $("#main").innerHTML = h;
 }
 
 function viewClients() {
-  const {clients, calls, a, b} = state.data;
+  const {calls, a, b} = state.data, clients = F("clients");
   const newOnes = clients.filter(c => new Date(c.created_at) >= a && new Date(c.created_at) <= b);
   const phones = new Set(clients.filter(c => new Date(c.created_at) < a).map(c => c.phone));
   const callers = [...new Set(calls.map(c => c.phone).filter(Boolean))];
   const returning = callers.filter(p => phones.has(p)).length;
-  let h = cards([[newOnes.length, "new clients"], [returning, "returning callers"], [callers.length - returning, "new callers"], [clients.length, "clients in total"]]);
+  let h = showing(clients.length, state.data.clients.length, "clients") + cards([[newOnes.length, "new clients (added in these dates)"], [returning, "callers already known"], [callers.length - returning, "first-time callers"], [clients.length, "clients in total"]]);
   if (state.mode === "graphs") {
     h += canvas("New clients per day", "k1") + canvas("New vs returning callers", "k2"); $("#main").innerHTML = h;
     const [l, v] = byDay(newOnes, "created_at");
@@ -339,27 +509,27 @@ function viewClients() {
     chart($("#k2"), {type: "doughnut", legend: true, data: {labels: ["Returning", "New"], datasets: [{data: [returning, callers.length - returning]}]}});
     return;
   }
-  h += `<div class="panel"><h2>Clients</h2>` + clients.map(c => `<div class="row" data-client="${c.id}"><div class="main"><div class="t">${esc(c.name)}${newOnes.includes(c) ? ' <span class="pill ok">new</span>' : ""}</div>
-    <div class="s">${esc(c.phone)} · ${c.total_visits || 0} visit(s)${c.last_service ? " · last: " + esc(c.last_service) : ""}${c.last_appointment ? " " + fmtD(c.last_appointment) : ""}</div></div></div>`).join("") + "</div>";
+  h += `<div class="panel"><h2>Clients</h2>${clients.length ? "" : '<p class="muted">No clients match.</p>'}` + clients.map(c => `<div class="row" data-client="${c.id}"><div class="main"><div class="t">${esc(c.name)}${newOnes.includes(c) ? ' <span class="pill ok">new</span>' : ""}</div>
+    <div class="s">${esc(c.phone)} · ${visits(c.total_visits)}${c.last_service ? " · last: " + esc(c.last_service) : ""}${c.last_appointment ? " " + fmtD(c.last_appointment) : ""}</div></div></div>`).join("") + "</div>";
   $("#main").innerHTML = h;
 }
 
 function viewGrades() {
-  const graded = state.data.calls.filter(c => c.qa_result != null);
+  const graded = F("calls").filter(c => c.qa_result != null);
   const well = graded.filter(c => c.qa_result === "Pass");
   const notWell = graded.filter(c => c.qa_result !== "Pass");
-  let h = cards([[`${well.length} of ${graded.length}`, "handled well"], [graded.length ? Math.round(100 * well.length / graded.length) + "%" : "–", "handled well"],
+  let h = showing(graded.length, state.data.calls.filter(c => c.qa_result != null).length, "graded calls") + cards([[`${well.length} of ${graded.length}`, "handled well"], [graded.length ? Math.round(100 * well.length / graded.length) + "%" : "–", "handled well"],
     [graded.length ? Math.round(graded.reduce((a, c) => a + (c.qa_score || 0), 0) / graded.length) : "–", "average grade"]]);
   if (state.mode === "graphs") {
     h += canvas("Average grade per day", "g1") + canvas("Handled well vs not, per day", "g2"); $("#main").innerHTML = h;
     const [l, sum] = byDay(graded, "call_time", c => c.qa_score || 0), [, n] = byDay(graded, "call_time");
-    chart($("#g1"), {type: "line", data: {labels: l, datasets: [{data: sum.map((s, i) => n[i] ? Math.round(s / n[i]) : null), borderColor: accent(), tension: .3, spanGaps: true}]}, options: {scales: {y: {min: 0, max: 100}}}});
+    chart($("#g1"), {type: "line", data: {labels: l, datasets: [{data: sum.map((s, i) => n[i] ? Math.round(s / n[i]) : null), borderColor: accent(), tension: 0, pointRadius: 3, spanGaps: true}]}, options: {scales: {y: {min: 0, max: 100}}}});
     const [, w] = byDay(well, "call_time"), [, nw] = byDay(notWell, "call_time");
     chart($("#g2"), {type: "bar", legend: true, data: {labels: l, datasets: [{label: "Handled well", data: w, backgroundColor: accent()}, {label: "Not", data: nw, backgroundColor: "#f97066"}]}, options: {scales: {x: {stacked: true}, y: {stacked: true}}}});
     return;
   }
   h += `<div class="panel"><h2>Calls not handled well</h2>${notWell.length ? "" : '<p class="muted">None in these dates.</p>'}` + notWell.map(c => `<div class="row" data-call="${c.id}"><div class="main"><div class="t">${esc(c.caller_name || c.phone || "Unknown caller")} · ${fmtDT(c.call_time)}</div>
-    <div class="s" style="white-space:normal">${esc(whatWentWrong(c.qa_notes))}</div></div>${grade(c)}</div>`).join("") + "</div>";
+    <div class="s" style="white-space:normal">${esc(whatWentWrong(plainNotes(c.qa_notes)))}</div></div>${grade(c)}</div>`).join("") + "</div>";
   $("#main").innerHTML = h;
 }
 function whatWentWrong(notes) {
@@ -367,32 +537,66 @@ function whatWentWrong(notes) {
   return (lines.length ? lines : String(notes || "").split("\n")).slice(0, 3).join(" · ");
 }
 
+// "2026-11-04 12:00 με τον Νίκο" / «Πέμπτη 2026-11-05» -> "Wed 4 Nov, 12:00 με τον Νίκο"
+function niceBackup(t) {
+  const m = String(t).match(/(\d{4}-\d{2}-\d{2})(?:[ T]+(\d{1,2}:\d{2}))?/);
+  if (!m) return t;
+  const d = new Date(m[1] + "T12:00:00");
+  const day = d.toLocaleDateString(LOC, {weekday: "short", day: "numeric", month: "short"});
+  const rest = String(t).replace(m[0], "").replace(/^[\s,·-]*(Δευτέρα|Τρίτη|Τετάρτη|Πέμπτη|Παρασκευή|Σάββατο|Κυριακή)?[\s,·-]*/i, "").trim();
+  return day + (m[2] ? ", " + m[2] : "") + (rest ? " " + rest : "");
+}
+// the grader's notes in plain words for an owner (f)
+function plainNotes(n) {
+  if (!n) return "Not checked yet.";
+  // a call checked twice keeps only the second (deciding) judge's notes; the first judge's
+  // notes and the re-check header are for us, not the owner
+  return String(n).split(/\n(?=FIRST CHECK)/)[0].split("\n").filter(l => !/^(SECOND CHECK|RE-CHECKED)/.test(l))
+    .map(l => l
+      .replace(/\bend_call( tool)?\b/g, "ending the call").replace(/\bcheck_availability( tool)?\b/g, "checking the diary")
+      .replace(/\bbook_appointment( tool)?\b/g, "booking").replace(/\breschedule_appointment\b/g, "moving the booking")
+      .replace(/\bcancel_appointment\b/g, "cancelling").replace(/\bflag_urgent\b/g, "the urgent message")
+      .replace(/\bleave_message\b/g, "taking a message").replace(/\bfind_my_appointments\b/g, "looking up the booking")
+      .replace(/\btool (call|result)s?\b/gi, "action").replace(/\s*\((?:[-+]\d+)\)/g, "")
+      .replace(/^AUTOMATIC FAIL:\s*/, "Counted by the system: "))
+    .join("\n");
+}
+
 // ---------- tap a call / client ----------
 $("#main").addEventListener("click", async e => {
+  if (e.target.closest("[data-clear]")) { e.preventDefault(); return clearFilters(); }
   const cb = e.target.closest("input[data-msg]");
-  if (cb) { e.preventDefault(); return askTick(cb); }
+  if (cb) { e.preventDefault(); if (ROLE !== "owner") return alertBox("View only: the owner ticks messages done."); return askTick(cb); }
   const r = e.target.closest("[data-call]"); if (r) return openCall(r.dataset.call);
   const k = e.target.closest("[data-client]"); if (k) return openClient(k.dataset.client);
 });
 async function openCall(id) {
   const c = state.data.calls.find(x => x.id === id);
   dlg(`<h2 style="margin-top:0">${esc(c.caller_name || c.phone || "Unknown caller")}</h2><p class="muted">${fmtDT(c.call_time)} · ${mins(c.duration_s)} · ${esc(c.action_taken || "")}</p><p>${grade(c)}</p>
-    <p><b>Summary:</b> ${esc(c.summary || c.action_taken || "–")}</p>
-    ${c.recording_path ? `<audio controls preload="none" style="width:100%" id="rec"></audio>` : '<p class="muted">Recording: not available for this call yet.</p>'}
-    <h3>How it went</h3><pre>${esc(c.qa_notes || "Not graded.")}</pre><h3>Transcript</h3><pre id="tx">Loading…</pre>`, [["Close", null]]);
+    <p><b>Summary:</b> ${esc(summaryOf(c) || c.action_taken || "–")}</p>
+    ${c.recording_path ? `<audio controls preload="metadata" style="width:100%" id="rec" class="hide"></audio><p class="muted" id="recMsg">Loading the recording…</p>` : `<p class="muted">${c.got_busy ? "No recording: the caller got a busy signal." : "Recording not ready yet."}</p>`}
+    <h3>How it went</h3><pre>${esc(plainNotes(c.qa_notes))}</pre><h3>Transcript</h3><pre id="tx">Loading…</pre>`, [["Close", null]]);
   const {data} = await sb.from("call_log").select("transcript").eq("id", id).single();
   $("#tx").textContent = (data && data.transcript || "No transcript.").split("\n").filter(l => !/^\[(tool|call)/.test(l)).join("\n");
   if (c.recording_path) {
     const {data: s} = await sb.storage.from("recordings").createSignedUrl(c.recording_path, 600);
-    if (s) $("#rec").src = s.signedUrl;
+    if (s && $("#rec")) { $("#rec").src = s.signedUrl; $("#rec").classList.remove("hide"); $("#recMsg").remove(); }
+    else if ($("#recMsg")) $("#recMsg").textContent = "Recording not ready yet.";
   }
 }
-function openClient(id) {
+const visits = n => !n ? "no visits yet" : n === 1 ? "1 visit" : n + " visits";
+async function openClient(id) {
   const c = state.data.clients.find(x => x.id === id);
-  const calls = state.data.calls.filter(x => x.phone === c.phone), books = state.data.books.filter(x => x.phone === c.phone);
-  dlg(`<h2 style="margin-top:0">${esc(c.name)}</h2><p class="muted">${esc(c.phone)} · client since ${fmtD(c.created_at)} · ${c.total_visits || 0} visit(s)</p>
-    <h3>Bookings (these dates)</h3>${books.map(b => `<div>${esc(b.kind)} · ${b.appointment_at ? fmtDT(b.appointment_at) : ""} · ${esc(b.service || "")}</div>`).join("") || '<p class="muted">None.</p>'}
-    <h3>Calls (these dates)</h3>${calls.map(x => `<div>${fmtDT(x.call_time)} · ${esc(x.action_taken || "")}</div>`).join("") || '<p class="muted">None.</p>'}`, [["Close", null]]);
+  dlg(`<h2 style="margin-top:0">${esc(c.name)}</h2><p class="muted">${esc(c.phone)} · client since ${fmtD(c.created_at)} · ${visits(c.total_visits)}</p>
+    <div id="hist"><p class="muted">Loading their history…</p></div>`, [["Close", null]]);
+  // their whole history, not only the chosen dates
+  const [{data: books}, {data: calls}] = await Promise.all([
+    sb.from("bookings_log").select("kind,appointment_at,service,staff,event_time").eq("phone", c.phone).order("event_time", {ascending: false}).limit(50),
+    sb.from("call_log").select("call_time,action_taken,summary").eq("phone", c.phone).order("call_time", {ascending: false}).limit(50)]);
+  const word = {booked: "Booked", rescheduled: "Moved", cancelled: "Cancelled"};
+  if (!$("#hist")) return;
+  $("#hist").innerHTML = `<h3>Bookings (all time)</h3>${(books || []).map(b => `<div>${word[b.kind] || esc(b.kind)} · ${b.appointment_at ? fmtDT(b.appointment_at) : ""} · ${esc(b.service || "")}${b.staff ? " · " + esc(b.staff) : ""}</div>`).join("") || '<p class="muted">No bookings made by phone with Maria yet.</p>'}
+    <h3>Calls (all time)</h3>${(calls || []).map(x => `<div>${fmtDT(x.call_time)} · ${esc(x.summary || RESULT[x.action_taken] || x.action_taken || "")}</div>`).join("") || '<p class="muted">No calls yet.</p>'}`;
 }
 function dlg(body, buttons) {
   $("#dlgBody").innerHTML = body; $("#dlgFoot").innerHTML = "";
@@ -422,17 +626,123 @@ async function live() {
   const n = (data || []).filter(r => r.active && (Date.now() - new Date(r.updated_at)) < 30 * 60 * 1000).length;
   const onCall = n > 0;
   $("#liveDot").classList.toggle("on", onCall);
-  $("#liveText").textContent = onCall ? (n > 1 ? `On ${n} calls` : "On a call") : "Free";
+  $("#live").classList.toggle("on", onCall);
+  $("#liveText").innerHTML = onCall ? (n > 1 ? `<span class="long">Maria is on ${n} calls</span><span class="short">On ${n} calls</span>`
+    : '<span class="long">Maria is on a call</span><span class="short">On a call</span>') : '<span class="long">Maria is free</span><span class="short">Free</span>';
 }
+
+// ---------- Greek / English (Q6 k, 4 Nov) ----------
+// The page is written in English; with Greek chosen, every fixed word on it is swapped for its
+// Greek one as it appears (names, summaries and the call notes stay as they are).
+const EL = {
+  "Calls": "Κλήσεις", "Bookings & money": "Ραντεβού & έσοδα", "Messages": "Μηνύματα", "Clients": "Πελάτες",
+  "How calls went": "Πώς πήγαν οι κλήσεις", "1 day": "1 μέρα", "3 days": "3 μέρες", "Week": "Εβδομάδα", "Month": "Μήνας",
+  "Year": "Έτος", "Dates…": "Ημερομηνίες…", "List": "Λίστα", "Graphs": "Γραφήματα", "Clear": "Καθαρισμός",
+  "Maria, your receptionist": "Η Μαρία, η ρεσεψιονίστ σας", "Maria is on a call": "Η Μαρία είναι σε κλήση",
+  "Maria is free": "Η Μαρία είναι ελεύθερη", "View only.": "Μόνο προβολή.", "Sign out": "Αποσύνδεση", "Loading…": "Φόρτωση…",
+  "calls": "κλήσεις", "average length": "μέση διάρκεια", "callers got busy": "βρήκαν κατειλημμένο", "busiest hour": "πιο πολυάσχολη ώρα",
+  "languages": "γλώσσες", "Every call": "Όλες οι κλήσεις", "No calls in these dates.": "Καμία κλήση αυτές τις μέρες.",
+  "No calls match.": "Καμία κλήση δεν ταιριάζει.", "Unknown caller": "Άγνωστος καλών", "test": "δοκιμή", "busy": "κατειλημμένο",
+  "Calls per day": "Κλήσεις ανά μέρα", "Busiest hours": "Πιο πολυάσχολες ώρες", "Busiest days": "Πιο πολυάσχολες μέρες", "Language": "Γλώσσα",
+  "bookings": "ραντεβού", "moved": "μετακινήθηκαν", "cancelled": "ακυρώθηκαν", "booked (from prices)": "κλεισμένα (από τιμοκατάλογο)",
+  "lost to cancellations": "χάθηκαν από ακυρώσεις", "net": "καθαρά", "Per service": "Ανά υπηρεσία", "Per staff member": "Ανά μέλος προσωπικού",
+  "Booked": "Κλείστηκαν", "Moved": "Μετακινήθηκαν", "Cancelled": "Ακυρώθηκαν", "Net €": "Καθαρά €", "Every booking change": "Όλες οι αλλαγές ραντεβού",
+  "None in these dates.": "Καμία αυτές τις μέρες.", "Bookings and cancellations per day": "Ραντεβού και ακυρώσεις ανά μέρα",
+  "Money per day (net)": "Έσοδα ανά μέρα (καθαρά)", "messages": "μηνύματα", "urgent": "επείγοντα", "not done yet": "εκκρεμούν",
+  "Every message": "Όλα τα μηνύματα", "No messages in these dates.": "Κανένα μήνυμα αυτές τις μέρες.", "Done": "Έγινε",
+  "URGENT": "ΕΠΕΙΓΟΝ", "Messages per day": "Μηνύματα ανά μέρα", "Call back": "Να καλέσουμε", "Urgent": "Επείγον",
+  "new clients (added in these dates)": "νέοι πελάτες (σε αυτές τις μέρες)", "callers already known": "γνωστοί καλούντες",
+  "first-time callers": "καλούν πρώτη φορά", "clients in total": "πελάτες συνολικά", "No clients match.": "Κανένας πελάτης δεν ταιριάζει.",
+  "New clients per day": "Νέοι πελάτες ανά μέρα", "New vs returning callers": "Νέοι και γνωστοί καλούντες", "Returning": "Γνωστοί", "New": "Νέοι",
+  "new": "νέος", "handled well": "καλή εξυπηρέτηση", "average grade": "μέσος βαθμός", "Calls not handled well": "Κλήσεις που δεν πήγαν καλά",
+  "Average grade per day": "Μέσος βαθμός ανά μέρα", "Handled well vs not, per day": "Καλή εξυπηρέτηση ή όχι, ανά μέρα",
+  "Handled well": "Καλή εξυπηρέτηση", "Not handled well": "Όχι καλή εξυπηρέτηση", "Check": "Έλεγχος", "not graded": "χωρίς βαθμό", "Not": "Όχι",
+  "How it went": "Πώς πήγε", "Transcript": "Απομαγνητοφώνηση", "Close": "Κλείσιμο", "Recording not ready yet.": "Η ηχογράφηση δεν είναι έτοιμη ακόμα.",
+  "Loading the recording…": "Φόρτωση ηχογράφησης…", "No recording: the caller got a busy signal.": "Χωρίς ηχογράφηση: ο καλών βρήκε κατειλημμένο.",
+  "Summary:": "Σύνοψη:", "Bookings (all time)": "Ραντεβού (από πάντα)", "Calls (all time)": "Κλήσεις (από πάντα)",
+  "Loading their history…": "Φόρτωση ιστορικού…", "No calls yet.": "Καμία κλήση ακόμα.",
+  "No bookings made by phone with Maria yet.": "Κανένα ραντεβού μέσω της Μαρίας ακόμα.",
+  "Mark this as done?": "Να σημειωθεί ως ολοκληρωμένο;", "Mark this as NOT done?": "Να σημειωθεί ως ΜΗ ολοκληρωμένο;", "No": "Όχι", "Yes": "Ναι",
+  "Questions only": "Μόνο ερωτήσεις", "Nothing done": "Τίποτα δεν έγινε", "Got busy": "Κατειλημμένο", "Not graded": "Χωρίς βαθμό",
+  "Greek": "Ελληνικά", "English": "Αγγλικά", "Under 1 min": "Κάτω από 1 λεπτό", "1–3 min": "1–3 λεπτά", "Over 3 min": "Πάνω από 3 λεπτά",
+  "Not done yet": "Εκκρεμεί", "New in these dates": "Νέοι σε αυτές τις μέρες", "From before": "Από πριν", "No visits yet": "Καμία επίσκεψη",
+  "1 visit": "1 επίσκεψη", "2+ visits": "2+ επισκέψεις", "Show all": "Δείξε όλα",
+  "Why people couldn't book": "Γιατί κάποιοι δεν έκλεισαν ραντεβού", "No free time that suited them": "Καμία ώρα που να τους βολεύει",
+  "The person they wanted was full": "Ο γιατρός που ήθελαν ήταν γεμάτος", "Too expensive for them": "Ακριβό για αυτούς",
+  "Service not offered": "Η υπηρεσία δεν προσφέρεται", "Hung up before it was settled": "Έκλεισαν πριν τελειώσει",
+  "Other reason": "Άλλος λόγος",
+  "Plan & bills": "Πακέτο & λογαριασμοί", "My day": "Η μέρα μου", "Your plan": "Το πακέτο σας", "Plan": "Πακέτο", "Price": "Τιμή",
+  "Next bill": "Επόμενος λογαριασμός", "Invoices": "Τιμολόγια", "Date": "Ημερομηνία", "Period": "Περίοδος", "Amount": "Ποσό",
+  "Status": "Κατάσταση", "Paid": "Πληρώθηκε", "Due": "Οφείλεται", "Who signed in": "Ποιος συνδέθηκε", "No invoices yet.": "Κανένα τιμολόγιο ακόμα.",
+  "No plan details yet.": "Δεν υπάρχουν ακόμα στοιχεία πακέτου.", "No sign-ins noted yet.": "Καμία σύνδεση ακόμα.",
+  "booked for you": "κλείστηκαν για εσάς", "Your appointments booked by Maria": "Τα ραντεβού σας από τη Μαρία", "Cancelled": "Ακυρώθηκαν",
+  "View only: the owner ticks messages done.": "Μόνο προβολή: ο ιδιοκτήτης σημειώνει τα μηνύματα.",
+ "Everyone who wanted an appointment got one.": "Όλοι όσοι ήθελαν ραντεβού το έκλεισαν.",
+};
+const EL_LABEL = {"Result": "Αποτέλεσμα", "Language": "Γλώσσα", "Grade": "Βαθμός", "Length": "Διάρκεια", "Service": "Υπηρεσία",
+  "Change": "Αλλαγή", "Staff": "Προσωπικό", "Status": "Κατάσταση", "Type": "Τύπος", "Client": "Πελάτης", "Visits": "Επισκέψεις"};
+const EL_RE = [
+  [/^(.+): all$/, (m, a) => (EL_LABEL[a] || a) + ": όλα"],
+  [/^Showing (\d+) of (\d+) (.+)\.\s*$/, (m, a, b, w) => `Εμφανίζονται ${a} από ${b} ${EL[w] || ({"booking changes": "αλλαγές ραντεβού", "graded calls": "βαθμολογημένες κλήσεις"})[w] || w}. `],
+  [/^(\d+) of (\d+)$/, (m, a, b) => `${a} από ${b}`],
+  [/^Maria is on (\d+) calls$/, (m, a) => `Η Μαρία είναι σε ${a} κλήσεις`],
+  [/^(\d+) visits$/, (m, a) => `${a} επισκέψεις`],
+  [/^no visits yet$/, () => "καμία επίσκεψη"],
+  [/^On (\d+) calls$/, (m, a) => `Σε ${a} κλήσεις`],
+];
+EL["On a call"] = "Σε κλήση"; EL["Free"] = "Ελεύθερη";
+// words inside longer lines ("Booked · Sat 6 Nov…", "Handled well · 100", "client since 4 Nov · 2 visits")
+const EL_IN = [
+  [/^Not handled well( · |$)/, "Όχι καλή εξυπηρέτηση$1"], [/^Handled well( · |$)/, "Καλή εξυπηρέτηση$1"], [/^Check( · )/, "Έλεγχος$1"],
+  [/^Booked( · |: )/, "Κλείστηκε$1"], [/^Moved( · |: )/, "Μετακινήθηκε$1"], [/^Cancelled( · |: )/, "Ακυρώθηκε$1"],
+  [/ · client since /, " · πελάτης από "], [/ · (\d+) visits\b/, " · $1 επισκέψεις"], [/ · 1 visit\b/, " · 1 επίσκεψη"],
+  [/ · no visits yet\b/, " · καμία επίσκεψη"], [/ · got busy\b/, " · βρήκε κατειλημμένο"], [/^for /, "για "], [/ · on the phone /, " · στο τηλέφωνο "],
+  [/ \(was /, " (ήταν "], [/^Backup booked: /, "Εφεδρικό ραντεβού: "], [/ · done by /, " · έγινε από "], [/ visits?\b/, " επισκέψεις"],
+];
+function trText(t) {
+  const core = t.trim(); if (!core) return null;
+  let out = EL[core];
+  if (out == null) for (const [re, fn] of EL_RE) { const m = core.match(re); if (m) { out = fn(...m); break; } }
+  if (out == null) { let x = core; for (const [re, to] of EL_IN) x = x.replace(re, to); if (x !== core) out = x; }
+  return out == null ? null : t.replace(core, out);
+}
+function translate(root) {
+  if (LANGSEL !== "el" || !root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (n.parentElement && n.parentElement.closest("pre, #tx")) continue;
+    const t = trText(n.nodeValue); if (t != null && t !== n.nodeValue) n.nodeValue = t;
+  }
+  for (const el of root.querySelectorAll("[placeholder]")) if (el.placeholder.startsWith("Search")) el.placeholder = "Αναζήτηση: όνομα, επώνυμο, τηλέφωνο…";
+}
+if (LANGSEL === "el") {
+  document.documentElement.lang = "el";
+  const mo = new MutationObserver(() => { mo.disconnect(); translate(document.body); mo.observe(document.body, {childList: true, subtree: true, characterData: true}); });
+  translate(document.body); mo.observe(document.body, {childList: true, subtree: true, characterData: true});
+}
+$("#langBtn").textContent = LANGSEL === "el" ? "EN" : "ΕΛ";
+$("#langBtn").addEventListener("click", () => { try { localStorage.setItem("maria-lang", LANGSEL === "el" ? "en" : "el"); } catch (e) {} location.reload(); });
 
 // ---------- start ----------
 async function start() {
   const {data: {session}} = await sb.auth.getSession();
   if (!session) { show("loginView"); return; }
   if (location.hash.includes("type=recovery")) { show("resetView"); return; }
-  const {data: m} = await sb.from("portal_members").select("business,display_name").maybeSingle();
-  me = m; show("appView");
+  // Q7 (b): owner (everything), viewer (the same, cannot tick), staff (only their own day, no money).
+  // Before the database has roles, everyone is an owner, as today.
+  let {data: m, error: merr} = await sb.from("portal_members").select("business,display_name,role,staff_name").maybeSingle();
+  if (merr) ({data: m} = await sb.from("portal_members").select("business,display_name").maybeSingle());
+  me = m; ROLE = (m && m.role) || "owner"; show("appView");
+  if (ROLE === "staff") {
+    for (const b of $("#tabs").querySelectorAll("button")) b.classList.toggle("hide", b.dataset.tab !== "myday");
+    $("#mydayTab").classList.add("on"); state.tab = "myday";
+  } else {
+    // Plan & bills only once the database has it
+    const {error: berr} = await sb.from("billing").select("business").limit(1);
+    $("#planTab").classList.toggle("hide", !!berr);
+  }
   $("#bizName").textContent = m ? (m.business === "smile-better" ? "Smile Better" : m.business) : "Maria";
+  $("#bizLogo").textContent = ($("#bizName").textContent.trim()[0] || "M").toUpperCase();
   load(); live(); setInterval(live, 15000);
 }
 start();
