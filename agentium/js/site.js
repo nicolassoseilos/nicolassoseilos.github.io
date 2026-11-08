@@ -206,7 +206,7 @@
       var r = sky.getBoundingClientRect();
       visible = r.bottom > 0 && r.top < innerHeight;
       var p = hero ? Math.min(1, Math.max(0, -r.top / r.height)) // the whole time the sky is on screen
-                   : Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height + innerHeight)));
+                   : Math.min(1, Math.max(0, (innerHeight - r.top) / r.height)); // gone by the time the next part reaches the screen
       want = p * DEPTH; edge = hero ? 1 : Math.sin(Math.PI * p); dirty = true;
     }
     function frame(now) {
@@ -243,15 +243,19 @@
       $$(".story-dots i", story).forEach(function (d, k) { d.classList.toggle("on", k === i); });
     }
     opens.forEach(function (sec) {
-      if (sec.classList.contains("explode")) { // Maria opens, shows each compartment, then closes, ready
+      if (sec.classList.contains("explode")) { // the globe opens, each skill comes out and is explained, then all go back in: ready
         var px = progress($(".opens-track", sec)), N = $$(".ex-card", sec).length;
-        var op = px < 0.1 ? px / 0.1 : px > 0.88 ? Math.max(0, (0.96 - px) / 0.08) : 1;
-        $(".ex-unit", sec).style.setProperty("--open", op.toFixed(3));
-        var c = px < 0.1 || px > 0.88 ? -1 : Math.min(N - 1, Math.floor((px - 0.1) / 0.78 * N));
-        $$(".plate", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.88); d.classList.toggle("now", k === c); d.classList.toggle("above", c >= 0 && k > c); });
+        var op = px < 0.1 ? px / 0.1 : px > 0.86 ? Math.max(0, (0.95 - px) / 0.09) : 1;
+        var gl = $(".gl", sec); gl.style.setProperty("--open", op.toFixed(3));
+        $$(".gl-disk", sec).forEach(function (d, k) { // they come out one after another, and go back in the same way
+          var o = Math.min(1, Math.max(0, op * 1.6 - (k / N) * 0.6)); d.style.setProperty("--o", o.toFixed(3));
+        });
+        var c = px < 0.1 || px > 0.86 ? -1 : Math.min(N - 1, Math.floor((px - 0.1) / 0.76 * N));
+        $$(".gl-disk", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c); d.classList.toggle("now", k === c); });
         $$(".ex-card", sec).forEach(function (b, k) { b.classList.toggle("on", k === c); b.classList.toggle("gone", k < c); });
-        $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.88); });
-        var rd = px > 0.93; sec.classList.toggle("ready", rd); $(".ex-ready", sec).classList.toggle("show", rd);
+        $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.86); });
+        var rd = px > 0.95; sec.classList.toggle("ready", rd); $(".ex-ready", sec).classList.toggle("show", rd);
+        if (sec._c !== c && c >= 0) { sec._c = c; }
         return;
       }
       var p = progress($(".opens-track", sec));

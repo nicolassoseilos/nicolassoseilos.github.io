@@ -1,10 +1,10 @@
 # Agentium
 
-> Agentium makes Maria, a digital receptionist for businesses in Cyprus. Maria answers the business's phone 24/7 in Greek and English, and books, moves and cancels appointments straight into the business's calendar.
+> Agentium makes voice agents: digital receptionists for businesses in Cyprus. An Agentium voice agent answers the business's phone 24/7 in Greek and English, and books, moves and cancels appointments straight into the business's calendar.
 
 The site is in Greek (default, at /) and English (at /en/).
 
-## What Maria does
+## What an Agentium voice agent does
 - Answers every call, 24/7, including weekends and holidays.
 - Answers several callers at once, so nobody hears busy.
 - Books, moves and cancels appointments straight into the business's calendar.
