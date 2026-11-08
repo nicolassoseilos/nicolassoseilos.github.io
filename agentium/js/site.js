@@ -355,6 +355,17 @@
       $$(".story-dots i", story).forEach(function (d, k) { d.classList.toggle("on", k === i); });
     }
     opens.forEach(function (sec) {
+      if (sec.classList.contains("explode")) { // Maria opens, shows each compartment, then closes, ready
+        var px = progress($(".opens-track", sec)), N = $$(".ex-card", sec).length;
+        var op = px < 0.1 ? px / 0.1 : px > 0.88 ? Math.max(0, (0.96 - px) / 0.08) : 1;
+        $(".ex-unit", sec).style.setProperty("--open", op.toFixed(3));
+        var c = px < 0.1 || px > 0.88 ? -1 : Math.min(N - 1, Math.floor((px - 0.1) / 0.78 * N));
+        $$(".plate", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.88); d.classList.toggle("now", k === c); d.classList.toggle("above", c >= 0 && k > c); });
+        $$(".ex-card", sec).forEach(function (b, k) { b.classList.toggle("on", k === c); b.classList.toggle("gone", k < c); });
+        $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.88); });
+        var rd = px > 0.93; sec.classList.toggle("ready", rd); $(".ex-ready", sec).classList.toggle("show", rd);
+        return;
+      }
       var p = progress($(".opens-track", sec));
       var open = Math.min(1, p / 0.14); // the lid opens over the first 14% of the scroll
       $(".core", sec).style.setProperty("--open", open.toFixed(3));
