@@ -4,4 +4,4 @@
    Add ?demo to any page address to see both working with made-up data (nothing is booked, nothing is sent).
    turnstileSiteKey: Cloudflare Turnstile site key for the invisible human check when a Try Maria call starts (empty = none).
 */
-window.AGENTIUM_CONFIG = { bookingApi: "", tryMariaUrl: "", turnstileSiteKey: "" };
+window.AGENTIUM_CONFIG = { bookingApi: "https://performs-limited-academic-northwest.trycloudflare.com", tryMariaUrl: "https://election-watched-inns-race.trycloudflare.com", turnstileSiteKey: "" };

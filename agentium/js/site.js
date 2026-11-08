@@ -335,7 +335,7 @@
       var token;
       humanToken().then(function (t) { token = t; return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); })
         .then(function (st) {
-          stream = st; audio = new (window.AudioContext || window.webkitAudioContext)();
+          stream = st; audio = new (window.AudioContext || window.webkitAudioContext)(); if (audio.resume) audio.resume(); playAt = 0;
           sock = new WebSocket(SET.tryMariaUrl.replace(/^http/, "ws").replace(/\/$/, "") + "/call"); sock.binaryType = "arraybuffer";
           sock.onopen = function () { sock.send(JSON.stringify({ business: sel[0].value, name: sel[1].value, voice: sel[2].value, visitor: visitor, turnstile: token, lang: LANG })); };
           sock.onmessage = function (ev) {
