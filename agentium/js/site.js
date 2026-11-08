@@ -23,13 +23,6 @@
   pill.addEventListener("click", openMenu);
   $(".menu-close").addEventListener("click", closeMenu);
   menu.addEventListener("click", function (e) { if (e.target === menu) closeMenu(); });
-  function syncStillBtn() { $$("[data-still]").forEach(function (b) { b.textContent = still() ? T.play_motion : T.pause_motion; }); }
-  $$("[data-still]").forEach(function (b) {
-    b.addEventListener("click", function () {
-      root.classList.toggle("still"); store.set("ag-still", still() ? "1" : "0"); syncStillBtn(); onScroll();
-    });
-  });
-  syncStillBtn();
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
     if (menu.classList.contains("open")) closeMenu();
@@ -76,9 +69,11 @@
     var c = store.get("ag-cur") || "EUR"; if (!RATES[c]) c = "EUR";
     $$("[data-cur]", lm).forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-cur") === c)); });
     $$("[data-region-label]").forEach(function (s) { s.textContent = T.lang_name + " (" + c + ")"; });
-    $$("[data-eur-alt]").forEach(function (p) {
-      var v = +p.getAttribute("data-eur-alt");
-      p.textContent = c === "EUR" ? "" : T.pr_approx.replace("{v}", RATES[c][1] + Math.round(v * RATES[c][0]).toLocaleString(LANG === "el" ? "el-GR" : "en-GB"));
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    $$("[data-eur]").forEach(function (p) { // the number itself changes (rough rate; billing stays in euros)
+      var v = +p.getAttribute("data-eur") * RATES[c][0];
+      var txt = v < 10 ? v.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(v).toLocaleString(loc);
+      p.textContent = RATES[c][1] + txt;
     });
   }
   $$("[data-cur]", lm).forEach(function (b) { b.addEventListener("click", function () { store.set("ag-cur", b.getAttribute("data-cur")); applyCurrency(); }); });
