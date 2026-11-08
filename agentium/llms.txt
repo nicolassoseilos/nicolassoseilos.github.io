@@ -1,0 +1,32 @@
+# Agentium
+
+> Agentium makes Maria, a digital receptionist for businesses in Cyprus. Maria answers the business's phone 24/7 in Greek and English, and books, moves and cancels appointments straight into the business's calendar.
+
+The site is in Greek (default, at /) and English (at /en/).
+
+## What Maria does
+- Answers every call, 24/7, including weekends and holidays.
+- Answers several callers at once, so nobody hears busy.
+- Books, moves and cancels appointments straight into the business's calendar.
+- Knows the business: services, prices, opening hours and staff.
+- Handles staff choice ("with Dr Eleni" or "anyone is fine").
+- Recognises returning callers by their number and greets them by name.
+- Reads the details back so nothing is booked wrong.
+- Speaks Greek and English, and switches when the caller does.
+- Spots urgent cases and offers the earliest free time.
+- Takes messages and call-back requests, and emails the team when something needs a person.
+- The business gets its own client page with every call's recording, transcript and a short summary.
+
+## Plans (monthly, in euros, before VAT, no setup fee)
+- Silver: 2 callers at once, up to 900 minutes a month, about 10 calls a day: EUR 239.
+- Gold: 3 callers at once, up to 3,000 minutes a month, about 35 calls a day: EUR 489.
+- Platinum: 5 callers at once, up to 7,500 minutes a month, about 85 calls a day: EUR 989.
+- Diamond: 7 callers at once, up to 10,800 minutes a month, about 120 calls a day: EUR 1,449.
+- Extra minutes: EUR 0.15 each.
+
+## Pages
+- [Home](/index.html) / [English](/en/index.html)
+- [Services](/services.html) / [English](/en/services.html)
+- [Pricing](/pricing.html) / [English](/en/pricing.html)
+- [Book a free 30-minute demo](/book.html) / [English](/en/book.html)
+- [Privacy policy](/privacy.html), [Terms](/terms.html)
