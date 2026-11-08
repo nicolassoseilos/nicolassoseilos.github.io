@@ -117,7 +117,11 @@
   var pass = $(".cloud-pass"), story = $(".story"), opens = $$(".opens");
   function onScroll() {
     if (still()) return;
-    if (pass) { var r = pass.getBoundingClientRect(); pass.style.setProperty("--p", Math.min(1, Math.max(0, 1 - (r.top + r.height * 0.5) / innerHeight)).toFixed(3)); }
+    if (pass) { // fly through the clouds: they grow and part, the screen goes white in the middle, then clears
+      var r = pass.getBoundingClientRect(), pp = Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height)));
+      pass.style.setProperty("--p", pp.toFixed(3));
+      pass.style.setProperty("--veil", Math.max(0, 1 - Math.abs(pp - 0.5) / 0.2).toFixed(3));
+    }
     if (story) {
       var p = progress(story), i = Math.min(2, Math.floor(p * 3));
       $$(".story-step", story).forEach(function (s, k) { s.classList.toggle("on", k === i); });
