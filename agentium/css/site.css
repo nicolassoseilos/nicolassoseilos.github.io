@@ -136,7 +136,7 @@ h3{font-size:clamp(21px,2.6vw,26px);letter-spacing:-.012em;line-height:1.2;font-
 .mic-wrap.hearing .echo{animation:ripple 1.3s ease-out infinite}.mic-wrap.hearing .echo:nth-child(2){animation-delay:.45s}
 .cloud-pass{height:90vh}
 .sky.gap .sky-canvas{margin-bottom:0}
-.sky.gap{height:150vh;background:linear-gradient(180deg,#ffffff 0%,#e3effa 28%,#cfe4f6 50%,#e3effa 72%,#ffffff 100%)}
+.sky.gap{height:150vh;background:transparent}
 html.still .sky.gap{height:30vh}
 html.still .cloud-pass{height:20vh}
 
@@ -240,6 +240,19 @@ html.still .cloud-pass{height:20vh}
   .ex-card.bubble::after{display:none}
   .ex-ready{left:50%;bottom:20%;white-space:normal;width:max-content;max-width:88vw;font-size:14.5px;text-align:left}
   .explode .opens-progress{display:none}
+}
+/* the Higgsfield globe film, scrubbed by scroll (8 Nov night). Its studio background is #e2ecf8, so the section is the same colour */
+.explode.gvid{background:linear-gradient(180deg,#ffffff 0%,#e2ecf8 12%,#e2ecf8 88%,#ffffff 100%)}
+.explode.gvid .ex-track{height:560vh}
+.gv-wrap{position:absolute;left:0;top:46%;width:66%;transform:translateY(-50%);aspect-ratio:16/9;max-height:calc(100% - 20px)}
+.gv{width:100%;height:100%;object-fit:cover;display:block;background:#e2ecf8;
+  -webkit-mask-image:radial-gradient(ellipse 52% 56% at 50% 52%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 52% 56% at 50% 52%,#000 62%,transparent 100%)}
+.explode.gvid .ex-card.bubble{right:4%}
+.explode.gvid .ex-ready{left:33%;bottom:6%}
+@media(max-width:820px){
+  .gv-wrap{left:-10%;width:120%;top:34%}
+  .explode.gvid .ex-card.bubble{right:auto}
+  .explode.gvid .ex-ready{left:50%;bottom:22%}
 }
 /* static list fallback (reduced motion / no JS) */
 .opens-static{display:none}

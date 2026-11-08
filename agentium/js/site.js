@@ -115,6 +115,11 @@
     return h <= 0 ? 0 : Math.min(1, Math.max(0, -r.top / h));
   }
   var story = $(".story"), opens = $$(".opens");
+  $$(".gv").forEach(function (v) { // pick the small film on phones; never plays by itself, only follows the scroll
+    v.src = innerWidth < 820 ? v.getAttribute("data-src-small") : v.getAttribute("data-src-big");
+    v.addEventListener("loadedmetadata", function () { v._dur = v.duration; v.pause(); onScroll && onScroll(); });
+    v.load();
+  });
 
   /* ---------- the live call on the home page: real-sounding calls, typed as they happen ---------- */
   var hl = $(".hero-live");
@@ -215,6 +220,11 @@
       cam += (want - cam) * (still() ? 1 : 0.08); // eased: it glides
       var dt = (now - t0) / 1000;
       ctx.setTransform(R, 0, 0, R, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (!hero && edge > 0.002) { // the blue sky comes and goes WITH the clouds, so it never leaves a band on the white page
+        var sk = ctx.createLinearGradient(0, 0, 0, H);
+        sk.addColorStop(0, "#e6f0fa"); sk.addColorStop(0.5, "#c9e0f5"); sk.addColorStop(1, "#e6f0fa");
+        ctx.globalAlpha = Math.min(1, edge * 1.3); ctx.fillStyle = sk; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+      }
       var F = Math.max(W, H) * 0.55, list = [];
       for (var k = 0; k < clouds.length; k++) { var d = clouds[k].z - cam; if (d > 0.18 && d < 10) list.push([d, clouds[k]]); }
       list.sort(function (a, b) { return b[0] - a[0]; });
@@ -243,19 +253,21 @@
       $$(".story-dots i", story).forEach(function (d, k) { d.classList.toggle("on", k === i); });
     }
     opens.forEach(function (sec) {
-      if (sec.classList.contains("explode")) { // the globe opens, each skill comes out and is explained, then all go back in: ready
-        var px = progress($(".opens-track", sec)), N = $$(".ex-card", sec).length;
-        var op = px < 0.1 ? px / 0.1 : px > 0.86 ? Math.max(0, (0.95 - px) / 0.09) : 1;
-        var gl = $(".gl", sec); gl.style.setProperty("--open", op.toFixed(3));
-        $$(".gl-disk", sec).forEach(function (d, k) { // they come out one after another, and go back in the same way
-          var o = Math.min(1, Math.max(0, op * 1.6 - (k / N) * 0.6)); d.style.setProperty("--o", o.toFixed(3));
-        });
-        var c = px < 0.1 || px > 0.86 ? -1 : Math.min(N - 1, Math.floor((px - 0.1) / 0.76 * N));
-        $$(".gl-disk", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c); d.classList.toggle("now", k === c); });
+      if (sec.classList.contains("explode")) { // the globe film follows the scroll: opens, the 12 beads come out, (cards), they go back, it closes
+        var px = progress($(".opens-track", sec)), N = $$(".ex-card", sec).length, v = $(".gv", sec);
+        if (v && v._dur) {
+          var T1 = 5.3, T2 = 6.5, D = v._dur - 0.05, t;
+          if (px < 0.16) t = px / 0.16 * T1; else if (px < 0.82) t = T1 + (px - 0.16) / 0.66 * (T2 - T1); else t = T2 + Math.min(1, (px - 0.82) / 0.14) * (D - T2);
+          v._want = t; if (!v._raf) v._raf = requestAnimationFrame(function step() { // eased seek, one at a time (a seek during a seek is dropped)
+            v._raf = 0; if (v.seeking) { v._raf = requestAnimationFrame(step); return; }
+            var cur = v.currentTime, d = v._want - cur;
+            if (Math.abs(d) > 0.02) { v.currentTime = cur + d * 0.35; v._raf = requestAnimationFrame(step); }
+          });
+        }
+        var c = px < 0.17 || px > 0.81 ? -1 : Math.min(N - 1, Math.floor((px - 0.17) / 0.64 * N));
         $$(".ex-card", sec).forEach(function (b, k) { b.classList.toggle("on", k === c); b.classList.toggle("gone", k < c); });
-        $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.86); });
+        $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= c || px > 0.81); });
         var rd = px > 0.95; sec.classList.toggle("ready", rd); $(".ex-ready", sec).classList.toggle("show", rd);
-        if (sec._c !== c && c >= 0) { sec._c = c; }
         return;
       }
       var p = progress($(".opens-track", sec));
