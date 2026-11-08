@@ -114,14 +114,123 @@
     var r = el.getBoundingClientRect(), h = r.height - innerHeight;
     return h <= 0 ? 0 : Math.min(1, Math.max(0, -r.top / h));
   }
-  var pass = $(".cloud-pass"), story = $(".story"), opens = $$(".opens");
+  var story = $(".story"), opens = $$(".opens");
+
+  /* ---------- the live call on the home page: real-sounding calls, typed as they happen ---------- */
+  var hl = $(".hero-live");
+  if (hl) (function () {
+    var calls = JSON.parse(hl.getAttribute("data-calls")), box = $(".hl-msgs", hl), biz = $(".hl-biz", hl), clock = $(".hl-clock", hl), tm = $(".hl-time", hl);
+    var ow = $(".hl-orb", hl), bars = $$(".hl-wave i", hl), chips = [$(".c1", hl), $(".c2", hl), $(".c3", hl)], who = "", n = 0, secs = 0;
+    function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+    setInterval(function () { // the voice bars follow whoever is talking
+      bars.forEach(function (b, i) {
+        var h = who === "m" ? 25 + Math.random() * 75 * (1 - Math.abs(i - 13.5) / 20) : who === "c" ? 15 + Math.random() * 40 : 10;
+        b.style.height = h.toFixed(0) + "%";
+      });
+    }, 120);
+    setInterval(function () { secs++; clock.textContent = Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0"); }, 1000);
+    function bubble(cls, text) { var d = document.createElement("div"); d.className = "hl-msg " + cls; if (text) d.textContent = text; box.appendChild(d); return d; }
+    async function typeIn(el, text) { for (var i = 1; i <= text.length; i++) { el.textContent = text.slice(0, i); await wait(text[i - 1] === " " ? 34 : 22); } }
+    async function run() {
+      if (still()) return; // phones set to "reduce motion": the first call stays as a still picture
+      for (;;) {
+        var c = calls[n % calls.length]; n++;
+        chips.forEach(function (x) { x.classList.remove("show"); });
+        box.style.transition = "opacity .4s"; box.style.opacity = 0; await wait(450);
+        box.innerHTML = ""; box.style.opacity = 1; biz.textContent = c.biz; tm.textContent = c.time; secs = 0;
+        $(".hl-booked", hl).textContent = c.booked; $(".hl-when", hl).textContent = c.when;
+        await wait(500); chips[0].classList.add("show");
+        for (var k = 0; k < c.lines.length; k++) {
+          var w = c.lines[k][0], t = c.lines[k][1];
+          if (w === "c") { who = "c"; await wait(900); bubble("c", t); await wait(900); who = ""; }
+          else {
+            var dots = bubble("m typing"); dots.innerHTML = "<b></b><b></b><b></b>"; await wait(800);
+            dots.className = "hl-msg m"; dots.textContent = ""; who = "m"; ow.classList.add("talking");
+            await typeIn(dots, t); await wait(500); who = ""; ow.classList.remove("talking");
+          }
+          while (box.scrollHeight > box.clientHeight && box.firstChild) box.removeChild(box.firstChild);
+          await wait(450);
+        }
+        chips[1].classList.add("show"); await wait(1100); chips[2].classList.add("show"); await wait(4200);
+      }
+    }
+    run();
+    var tilt = $(".hl-tilt", hl);
+    if (matchMedia("(pointer:fine)").matches) $(".hero").addEventListener("mousemove", function (e) { // the phone turns gently toward the mouse
+      var x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
+      tilt.style.setProperty("--ry", (x * 16 - 4).toFixed(2) + "deg"); tilt.style.setProperty("--rx", (-y * 10 + 3).toFixed(2) + "deg");
+    });
+  })();
+
+  /* ---------- the sky: soft clouds drawn in 3D; scrolling flies the camera forward through them ---------- */
+  var sky = $(".sky"), cv = $(".sky-canvas");
+  if (sky && cv && cv.getContext) (function () {
+    var ctx = cv.getContext("2d"), W = 0, H = 0, R = Math.min(window.devicePixelRatio || 1, 1.5), seed = 11;
+    function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+    function gauss() { return (rnd() + rnd() + rnd() - 1.5) / 1.5; }
+    function sprite() { // one fluffy cumulus: many soft puffs, flat-ish base, shaded underside
+      var w = 640, h = 340, c = document.createElement("canvas"), g = c.getContext("2d"); c.width = w; c.height = h;
+      var base = h * 0.72;
+      for (var i = 0; i < 70; i++) {
+        var x = w / 2 + gauss() * w * 0.30, sp = 1 - Math.abs(x - w / 2) / (w / 2);
+        var r = (26 + rnd() * 52) * (0.55 + sp * 0.8), y = base - r * (0.35 + rnd() * 0.9) * (0.6 + sp * 0.7);
+        var rg = g.createRadialGradient(x, y, 0, x, y, r);
+        rg.addColorStop(0, "rgba(255,255,255,1)"); rg.addColorStop(0.55, "rgba(255,255,255,.92)"); rg.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+      }
+      g.globalCompositeOperation = "source-atop"; // light from above, a cool shadow underneath
+      var sh = g.createLinearGradient(0, h * 0.25, 0, base + 10);
+      sh.addColorStop(0, "rgba(255,255,255,0)"); sh.addColorStop(0.6, "rgba(196,214,234,.35)"); sh.addColorStop(1, "rgba(150,178,208,.55)");
+      g.fillStyle = sh; g.fillRect(0, 0, w, h);
+      g.globalCompositeOperation = "destination-out"; // soft flat base
+      var cut = g.createLinearGradient(0, base - 18, 0, base + 30);
+      cut.addColorStop(0, "rgba(0,0,0,0)"); cut.addColorStop(1, "rgba(0,0,0,1)");
+      g.fillStyle = cut; g.fillRect(0, base - 18, w, h);
+      return c;
+    }
+    var sprites = [sprite(), sprite(), sprite(), sprite(), sprite()], clouds = [], DEPTH = 17;
+    for (var i = 0; i < 70; i++) {
+      var z = 1.2 + rnd() * 16, x = (rnd() * 2 - 1) * 2.2, y = gauss() * 0.9;
+      if (z < 4.5 && Math.abs(x) < 1.1 && y < 0.55) x = (x < 0 ? -1 : 1) * (1.1 + rnd() * 1.1); // keep the headline clear
+      if (z > 5 && z < 13 && rnd() < 0.45) { x = gauss() * 0.5; y = gauss() * 0.35; } // a thick bank dead ahead: you fly into it
+      clouds.push({ x: x, y: y, z: z, s: 0.8 + rnd() * 0.9, img: sprites[i % 5], drift: (rnd() - 0.5) * 0.004 });
+    }
+    function size() { W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * R); cv.height = Math.round(H * R); }
+    var cam = 0, want = 0, visible = true, t0 = performance.now();
+    function target() {
+      var r = sky.getBoundingClientRect(), span = r.height - innerHeight;
+      visible = r.bottom > 0 && r.top < innerHeight;
+      want = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) * DEPTH : 0;
+    }
+    function frame(now) {
+      requestAnimationFrame(frame);
+      if (!visible) return;
+      cam += (want - cam) * (still() ? 1 : 0.12); // a little easing: it glides instead of jumping
+      var dt = (now - t0) / 1000;
+      ctx.setTransform(R, 0, 0, R, 0, 0); ctx.clearRect(0, 0, W, H);
+      var F = Math.max(W, H) * 0.55, list = [];
+      for (var k = 0; k < clouds.length; k++) {
+        var c = clouds[k], d = c.z - cam;
+        if (d < 0.18 || d > 14) continue;
+        list.push([d, c]);
+      }
+      list.sort(function (a, b) { return b[0] - a[0]; });
+      for (var j = 0; j < list.length; j++) {
+        var d2 = list[j][0], cl = list[j][1], sc = F / d2, wx = cl.x + (still() ? 0 : Math.sin(dt * 0.05 + cl.z) * 0.06 + cl.drift * dt);
+        var cw = cl.s * sc * 1.6, ch = cw * 0.53, px = W / 2 + wx * sc - cw / 2, py = H * 0.46 + cl.y * sc - ch * 0.7;
+        var a = Math.min(1, (14 - d2) / 4) * Math.min(1, (d2 - 0.18) / 0.9);
+        if (a <= 0 || px > W || py > H || px + cw < 0 || py + ch < 0) continue;
+        ctx.globalAlpha = a; ctx.drawImage(cl.img, px, py, cw, ch);
+      }
+      ctx.globalAlpha = 1;
+    }
+    size(); target();
+    addEventListener("resize", function () { size(); target(); });
+    addEventListener("scroll", target, { passive: true });
+    requestAnimationFrame(frame);
+  })();
   function onScroll() {
     if (still()) return;
-    if (pass) { // fly through the clouds: they grow and part, the screen goes white in the middle, then clears
-      var r = pass.getBoundingClientRect(), pp = Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height)));
-      pass.style.setProperty("--p", pp.toFixed(3));
-      pass.style.setProperty("--veil", Math.max(0, 1 - Math.abs(pp - 0.5) / 0.2).toFixed(3));
-    }
     if (story) {
       var p = progress(story), i = Math.min(2, Math.floor(p * 3));
       $$(".story-step", story).forEach(function (s, k) { s.classList.toggle("on", k === i); });
@@ -130,10 +239,12 @@
     opens.forEach(function (sec) {
       var p = progress($(".opens-track", sec));
       var open = Math.min(1, p / 0.14); // the lid opens over the first 14% of the scroll
-      $(".box", sec).style.setProperty("--open", open.toFixed(3));
+      $(".core", sec).style.setProperty("--open", open.toFixed(3));
       var bs = $$(".bubble", sec), n = bs.length, q = (p - 0.14) / 0.84, cur = open < 1 ? -1 : Math.min(n - 1, Math.floor(q * n));
       bs.forEach(function (b, k) { b.classList.toggle("on", k === cur); b.classList.toggle("gone", k < cur); });
       $$(".opens-progress i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= cur); });
+      $$(".orbit i", sec).forEach(function (d, k) { d.classList.toggle("on", k <= cur); d.classList.toggle("now", k === cur); });
+      if (sec._cur !== cur) { sec._cur = cur; var ow2 = $(".core .orb-wrap", sec); ow2.classList.add("talking"); clearTimeout(sec._t); sec._t = setTimeout(function () { ow2.classList.remove("talking"); }, 1400); }
     });
   }
   var ticking = false;
@@ -145,7 +256,7 @@
   var mic = $("#mic");
   if (mic) {
     var sel = ["#t-biz", "#t-name", "#t-voice"].map(function (s) { return $(s); });
-    var hint = $("#michint"), last = $("#lastline"), orb = $("#orb"), chat = $("#chatwin"), msgs = $("#msgs"), timerEl = $("#trytimer");
+    var hint = $("#michint"), last = $("#lastline"), orb = $("#orb"), orbW = $("#orb .orb-wrap"), micW = $("#micwrap"), chat = $("#chatwin"), msgs = $("#msgs"), timerEl = $("#trytimer");
     var live = false, timers = [], inView = true, left = 90, tick = null, sock = null, audio = null, stream = null, playAt = 0;
     var DAILY = 90, RED_AT = 15;
     var visitor = store.get("ag-visitor") || (Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -165,14 +276,15 @@
     sel.forEach(function (s) { s.addEventListener("change", refresh); });
     function say(who, text) {
       var m = document.createElement("div"); m.className = "msg " + (who === "maria" ? "them" : "me"); m.textContent = text; msgs.appendChild(m); msgs.scrollTop = msgs.scrollHeight;
-      if (who === "maria") { last.textContent = text; orb.classList.add("talking"); timers.push(setTimeout(function () { orb.classList.remove("talking"); }, 1800)); }
+      if (who === "me") { micW.classList.add("hearing"); timers.push(setTimeout(function () { micW.classList.remove("hearing"); }, 1300)); }
+      if (who === "maria") { last.textContent = text; orbW.classList.add("talking"); timers.push(setTimeout(function () { orbW.classList.remove("talking"); }, 1800)); }
     }
     var MIC_SVG = mic.innerHTML;
     var END_SVG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-3.3-2.6M5.6 12.4A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8M22 2 2 22"/></svg>';
     var startedAt = 0, heardText = false;
     function end(why) {
       if (!live) return;
-      live = false; timers.forEach(clearTimeout); timers = []; clearInterval(tick); orb.classList.remove("talking");
+      live = false; timers.forEach(clearTimeout); timers = []; clearInterval(tick); orbW.classList.remove("talking"); micW.classList.remove("hearing");
       var used = (Date.now() - startedAt) / 1000;
       store.set(dayKey, String(Math.min(DAILY, (+store.get(dayKey) || 0) + used)));
       left = Math.max(0, left - used);
@@ -245,7 +357,9 @@
       var src = audio.createMediaStreamSource(stream), proc = audio.createScriptProcessor(2048, 1, 1), ratio = audio.sampleRate / 8000, carry = [];
       proc.onaudioprocess = function (e) {
         if (!sock || sock.readyState !== 1) return;
-        var x = e.inputBuffer.getChannelData(0);
+        var x = e.inputBuffer.getChannelData(0), en = 0;
+        for (var q = 0; q < x.length; q += 8) en += x[q] * x[q];
+        if (Math.sqrt(en / (x.length / 8)) > 0.03) { micW.classList.add("hearing"); clearTimeout(pipeMic.t); pipeMic.t = setTimeout(function () { micW.classList.remove("hearing"); }, 350); }
         for (var i = 0; i < x.length / ratio; i++) carry.push(Math.max(-1, Math.min(1, x[Math.floor(i * ratio)])));
         while (carry.length >= 160) {
           var c = carry.splice(0, 160), out = new Int16Array(160);
@@ -261,8 +375,8 @@
       for (var i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
       var s = audio.createBufferSource(); s.buffer = b; s.connect(audio.destination);
       playAt = Math.max(playAt, audio.currentTime + 0.05); s.start(playAt); playAt += b.duration;
-      orb.classList.add("talking"); if (!heardText) last.textContent = T.try_speaking;
-      clearTimeout(play.t); play.t = setTimeout(function () { orb.classList.remove("talking"); }, (playAt - audio.currentTime) * 1000 + 200);
+      orbW.classList.add("talking"); if (!heardText) last.textContent = T.try_speaking;
+      clearTimeout(play.t); play.t = setTimeout(function () { orbW.classList.remove("talking"); }, (playAt - audio.currentTime) * 1000 + 200);
     }
     mic.addEventListener("click", function () {
       if (live) { end(); return; }
