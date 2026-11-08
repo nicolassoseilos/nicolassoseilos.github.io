@@ -67,7 +67,7 @@ h3{font-size:clamp(21px,2.6vw,26px);letter-spacing:-.012em;line-height:1.2;font-
 .brand-mark{width:28px;height:28px}
 
 /* ===== HERO (ref 11 layout: centred headline over an illustrated island in the clouds) ===== */
-.sky{position:relative;overflow:clip;background:linear-gradient(180deg,#f9fcfe 0%,#e4f0fa 30%,#c4def4 58%,#d8eaf8 80%,#ffffff 100%)}
+.sky{position:relative;overflow:clip;background:linear-gradient(180deg,#f9fcfe 0%,#e4f0fa 30%,#c4def4 55%,#e2eef9 72%,#ffffff 88%,#ffffff 100%)}
 .sky-canvas{position:sticky;top:0;display:block;width:100%;height:100vh;height:100svh;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 20%,#000 80%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 20%,#000 80%,transparent 100%);margin-bottom:-100vh;margin-bottom:-100svh;pointer-events:none;z-index:1}
 .hero{position:relative;z-index:2;min-height:100svh;background:transparent;display:flex;flex-direction:column;align-items:center;padding-top:clamp(84px,13vh,128px)}
 .hero-copy{position:relative;z-index:3;text-align:center;padding:0 var(--pad);max-width:900px}

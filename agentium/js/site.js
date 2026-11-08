@@ -236,6 +236,17 @@
         ctx.globalAlpha = a; ctx.drawImage(cl.img, px, py, cw, ch);
       }
       ctx.globalAlpha = 1;
+      // wherever the cloud area ends on screen, the clouds melt away before that line -- no hard edge, ever
+      var rb = sky.getBoundingClientRect(), endY = rb.bottom - cv.getBoundingClientRect().top, startY = rb.top - cv.getBoundingClientRect().top;
+      ctx.globalCompositeOperation = "destination-in";
+      var fade = ctx.createLinearGradient(0, 0, 0, H), z = H * 0.45;
+      var a0 = Math.max(0, Math.min(1, startY / H)), a1 = Math.max(0, Math.min(1, (startY + z) / H));
+      var b1 = Math.max(0, Math.min(1, endY / H)), b0 = Math.max(0, Math.min(1, (endY - z) / H));
+      fade.addColorStop(0, startY > 0 ? "rgba(0,0,0,0)" : "#000");
+      if (startY > 0) { fade.addColorStop(a0, "rgba(0,0,0,0)"); fade.addColorStop(Math.max(a0, a1), "#000"); }
+      if (endY < H) { fade.addColorStop(Math.max(b0, startY > 0 ? Math.max(a0, a1) : 0), "#000"); fade.addColorStop(Math.max(b1, b0), "rgba(0,0,0,0)"); }
+      fade.addColorStop(1, endY < H ? "rgba(0,0,0,0)" : "#000");
+      ctx.fillStyle = fade; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = "source-over";
     }
     size(); target();
     addEventListener("resize", function () { size(); target(); });
