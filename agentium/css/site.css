@@ -163,9 +163,9 @@ html.still .cloud-pass{height:20vh}
 .story-step.on{opacity:1;transform:none}
 .story-step .lead{margin-left:auto;margin-right:auto}
 .story-art{width:min(300px,64vw);margin:0 auto 28px}
-.story-dots{position:absolute;right:max(16px,calc(var(--pad) / 2));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
-.story-dots i{width:8px;height:8px;border-radius:50%;background:#d2d2d7;transition:background .3s,height .3s}
-.story-dots i.on{background:var(--ink);height:22px;border-radius:4px}
+.step-dots{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:22px}
+.step-dots i{width:8px;height:8px;border-radius:50%;background:#d2d2d7}
+.step-dots i.on{background:var(--ink);height:22px;border-radius:4px}
 
 /* ===== Meet Maria: the box that opens as you scroll (ref 06) ===== */
 .opens{position:relative;background:linear-gradient(180deg,#ffffff 0%,var(--sky) 18%,var(--sky) 82%,#ffffff 100%)}
@@ -473,7 +473,7 @@ html.still .story,html.still .opens-track{height:auto}
 html.still .story-sticky,html.still .opens-sticky{position:static;height:auto;display:block;padding:72px 0}
 html.still .story-steps{min-height:0;display:grid;gap:56px}
 html.still .story-step{position:static;opacity:1;transform:none}
-html.still .story-dots,html.still .opens-progress,html.still .box-stage,html.still .ex-stage{display:none}
+html.still .step-dots,html.still .opens-progress,html.still .box-stage,html.still .ex-stage{display:none}
 html.still .opens-head{position:static;margin-bottom:24px}
 html.still .opens-static{display:block}
 
