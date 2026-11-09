@@ -163,9 +163,9 @@ html.still .cloud-pass{height:20vh}
 .story-step.on{opacity:1;transform:none}
 .story-step .lead{margin-left:auto;margin-right:auto}
 .story-art{width:min(300px,64vw);margin:0 auto 28px}
-.story-dots{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-.story-dots i{width:8px;height:8px;border-radius:50%;background:#d2d2d7;transition:background .3s,width .3s}
-.story-dots i.on{background:var(--ink);width:22px;border-radius:4px}
+.story-dots{position:absolute;right:max(16px,calc(var(--pad) / 2));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
+.story-dots i{width:8px;height:8px;border-radius:50%;background:#d2d2d7;transition:background .3s,height .3s}
+.story-dots i.on{background:var(--ink);height:22px;border-radius:4px}
 
 /* ===== Meet Maria: the box that opens as you scroll (ref 06) ===== */
 .opens{position:relative;background:linear-gradient(180deg,#ffffff 0%,var(--sky) 18%,var(--sky) 82%,#ffffff 100%)}
