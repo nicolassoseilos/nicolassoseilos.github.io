@@ -256,37 +256,10 @@
   $$(".sky").forEach(cloudField);
 
 
-  // story film: a real video, cut into frames, played by the scroll (like scrubbing)
-  var film = story && $(".story-film", story), filmF = [], filmN = 0, filmCur = -1, filmWant = 0, filmLoaded = false;
-  function filmSet() { return innerWidth / innerHeight < 0.9 ? "m" : "d"; }
-  function filmDraw(k) {
-    var cv = $("canvas", film), im = filmF[k]; if (!im || !im.complete || !im.naturalWidth) return false;
-    var r = film.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
-    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-    var s = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * s, h = im.naturalHeight * s;
-    cv.getContext("2d").drawImage(im, (W - w) / 2, (H - h) / 2, w, h); filmCur = k; return true;
-  }
-  function filmLoad() {
-    if (filmLoaded || !film || still()) return; filmLoaded = true;
-    filmN = +film.dataset.n; var base = $("img", film).dataset.base + filmSet() + "/";
-    for (var k = 0; k < filmN; k++) { var im = new Image(); im.decoding = "async"; im.src = base + String(k + 1).padStart(3, "0") + ".webp"; filmF.push(im); if (k === 0) im.onload = function () { filmDraw(0); film.classList.add("live"); }; }
-  }
-  function filmTick() {
-    if (!filmN) return;
-    var k = Math.max(0, Math.min(filmN - 1, Math.round(filmWant * (filmN - 1))));
-    for (var j = k; j >= 0; j--) { if (j === filmCur || filmDraw(j)) break; } // the nearest frame already downloaded
-  }
-  if (film) {
-    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting) filmLoad(); }, { rootMargin: "150% 0px" }).observe(story);
-    else filmLoad();
-    addEventListener("resize", function () { filmCur = -1; filmTick(); });
-  }
-
   function onScroll() {
     if (still()) return;
     if (story) {
       var p = progress(story), i = Math.min(2, Math.floor(p * 3));
-      if (film) { filmWant = Math.max(0, Math.min(1, p)); requestAnimationFrame(filmTick); }
       $$(".story-step", story).forEach(function (s, k) { s.classList.toggle("on", k === i); });
       $$(".story-dots i", story).forEach(function (d, k) { d.classList.toggle("on", k === i); });
     }
