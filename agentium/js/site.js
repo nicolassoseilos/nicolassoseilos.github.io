@@ -256,10 +256,61 @@
   $$(".sky").forEach(cloudField);
 
 
+  // story film: a real video, cut into frames, played by the scroll (like scrubbing)
+  var film = story && $(".story-film", story), filmF = [], filmN = 0, filmCur = -1, filmWant = 0, filmLoaded = false;
+  function filmSet() { return innerWidth / innerHeight < 0.9 ? "m" : "d"; }
+  function filmDraw(k) {
+    var cv = $("canvas", film), im = filmF[k]; if (!im || !im.complete || !im.naturalWidth) return false;
+    var r = film.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    var g = cv.getContext("2d"), s = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * s, h = im.naturalHeight * s;
+    if (filmSet() === "m") { // phones: a soft blurred copy fills the screen, the whole scene sits sharp below the words
+      g.filter = "blur(" + Math.round(18 * dpr) + "px)"; g.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); g.filter = "none";
+      var fw = W, fh = Math.round(im.naturalHeight * W / im.naturalWidth), fy = H * 0.66 - fh / 2;
+      var o = filmDraw.o || (filmDraw.o = document.createElement("canvas")); o.width = fw; o.height = fh;
+      var og = o.getContext("2d"); og.drawImage(im, 0, 0, fw, fh); og.globalCompositeOperation = "destination-in"; // feathered top and bottom, no hard edge
+      var fade = og.createLinearGradient(0, 0, 0, fh); fade.addColorStop(0, "rgba(0,0,0,0)"); fade.addColorStop(0.18, "#000"); fade.addColorStop(0.82, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)");
+      og.fillStyle = fade; og.fillRect(0, 0, fw, fh); og.globalCompositeOperation = "source-over";
+      g.drawImage(o, 0, fy);
+    } else g.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+    filmCur = k; return true;
+  }
+  function filmLoad() {
+    if (filmLoaded || !film || still()) return; filmLoaded = true;
+    filmN = +film.dataset.n; var base = $("img", film).dataset.base + filmSet() + "/";
+    for (var k = 0; k < filmN; k++) { var im = new Image(); im.decoding = "async"; im.src = base + String(k + 1).padStart(3, "0") + ".webp"; filmF.push(im); if (k === 0) im.onload = function () { filmDraw(0); film.classList.add("live"); }; }
+  }
+  function filmTick() {
+    if (!filmN) return;
+    var k = Math.max(0, Math.min(filmN - 1, Math.round(filmWant * (filmN - 1))));
+    for (var j = k; j >= 0; j--) { if (j === filmCur || filmDraw(j)) break; } // the nearest frame already downloaded
+  }
+  if (film) {
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting) filmLoad(); }, { rootMargin: "150% 0px" }).observe(story);
+    else filmLoad();
+    addEventListener("resize", function () { filmCur = -1; filmTick(); });
+  }
+
+  var solveDisp = story && $("#cloudf feDisplacementMap");
+  function ramp(x, a, b) { return Math.max(0, Math.min(1, (x - a) / (b - a))); }
+  function solveTick(q) { // after the film: the white clouds clear into blue sky and form the words
+    $(".solve-sky", story).style.opacity = ramp(q, 0.02, 0.3);
+    if (film) { film.style.opacity = 1 - ramp(q, 0.04, 0.3); film.style.transform = q > 0 ? "scale(" + (1 + 0.5 * ramp(q, 0, 0.3)) + ")" : ""; }
+    var a1 = ramp(q, 0.1, 0.3) * (1 - ramp(q, 0.5, 0.6)), a2 = ramp(q, 0.6, 0.78);
+    $$(".w1", story).forEach(function (w) { w.style.opacity = a1; w.style.transform = "scale(" + (0.94 + 0.06 * a1) + ")"; });
+    $$(".w2", story).forEach(function (w) { w.style.opacity = a2; w.style.transform = "scale(" + (0.94 + 0.06 * a2) + ")"; });
+    var form = q < 0.55 ? ramp(q, 0.1, 0.32) : ramp(q, 0.6, 0.8);
+    if (solveDisp) solveDisp.setAttribute("scale", Math.round(110 - 98 * form));
+  }
+
   function onScroll() {
     if (still()) return;
     if (story) {
-      var p = progress(story), i = Math.min(2, Math.floor(p * 3));
+      var p = progress(story), FILM = 0.72, f = Math.min(1, p / FILM); // the film takes the first 72% of the scroll, the cloud words the rest
+      var i = f < 0.235 ? -1 : f < 0.425 ? 0 : f < 0.625 ? 1 : f < 0.8 ? 2 : -1; // captions only while the film shows that place
+      solveTick(ramp(p, FILM, 1));
+      story.style.setProperty("--scrim", i < 0 ? 0 : 1);
+      if (film) { filmWant = f; requestAnimationFrame(filmTick); }
       $$(".story-step", story).forEach(function (s, k) { s.classList.toggle("on", k === i); });
       $$(".story-dots i", story).forEach(function (d, k) { d.classList.toggle("on", k === i); });
     }
