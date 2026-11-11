@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Agentium Balances</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#14171c;--muted:#5f6773;--line:#e3e6eb;--ok:#1a7f4b;--okbg:#e7f5ee;--soon:#9a6400;--soonbg:#fdf3e1;--now:#b42318;--nowbg:#fdecea;--accent:#2f5bea}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a20;--ink:#eef0f3;--muted:#9aa3ae;--line:#2a2f37;--ok:#4cc38a;--okbg:#14261d;--soon:#f0b44c;--soonbg:#2a2213;--now:#ff7b72;--nowbg:#2c1715;--accent:#7d9bff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:380px;margin:40px auto}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:16px}
+button{margin-top:18px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6}
+.err{color:var(--now);font-size:14px;margin-top:12px;min-height:1em}
+.grid{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.name{font-weight:650}
+.what{color:var(--muted);font-size:13px}
+.amt{font-size:28px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;font-weight:650;padding:3px 9px;border-radius:999px;margin-top:6px}
+.ok{color:var(--ok);background:var(--okbg)}.soon{color:var(--soon);background:var(--soonbg)}.now{color:var(--now);background:var(--nowbg)}.info{color:var(--muted);background:var(--bg)}
+.line{font-size:13px;color:var(--muted);margin-top:8px}
+.bar{height:6px;border-radius:6px;background:var(--line);margin-top:10px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:6px}
+.foot{color:var(--muted);font-size:12px;margin-top:18px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.link{background:none;border:0;color:var(--accent);padding:0;margin:0;width:auto;font-size:12px;font-weight:500}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <form id="login" autocomplete="on">
+    <h1>Agentium balances</h1>
+    <div class="sub">Live credit for every service Maria runs on.</div>
+    <label for="u">Email</label>
+    <input id="u" name="username" type="email" autocomplete="username" required>
+    <label for="p">Password</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button id="go" type="submit">Show balances</button>
+    <div class="err" id="err"></div>
+  </form>
+
+  <section id="view" class="hidden">
+    <h1>Agentium balances</h1>
+    <div class="sub" id="when"></div>
+    <div class="grid" id="cards"></div>
+    <div class="foot">
+      <span>"Left" = the last real balance, minus every call and request logged since (exact, at list price). Refreshes every minute.</span>
+      <button class="link" id="out" type="button">Sign out</button>
+    </div>
+  </section>
+</main>
+<script>
+// The page holds no secret: the key below is Supabase's PUBLIC (publishable) key, and the database answers
+// it with nothing but the result of balance_page(email, password) -- every table is closed to it.
+const SUPABASE_URL = "https://dlxplhhsjmwilgwwjryx.supabase.co";
+const PUBLIC_KEY = "sb_publishable_7G5H8UEOUuRb0Q4rZnebeA_zyBidQeW";
+const SOON_DAYS = 14, NOW_DAYS = 5;
+let creds = null, timer = null;
+
+const $ = id => document.getElementById(id);
+const money = (x, u) => (x == null || isNaN(x)) ? "—" : u + Number(x).toFixed(2);
+const fmtDay = d => d.toLocaleDateString("en-GB", {weekday: "short", day: "numeric", month: "short"});
+function ago(iso) {
+  if (!iso) return "never";
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60); if (h < 48) return h + " h ago";
+  return Math.round(h / 24) + " days ago";
+}
+function nextDay(day) {  // the next date with this day of the month (today counts)
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  let d = new Date(t.getFullYear(), t.getMonth(), day);
+  if (d < t) d = new Date(t.getFullYear(), t.getMonth() + 1, day);
+  return d;
+}
+
+async function fetchData() {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/balance_page", {
+    method: "POST",
+    headers: {"apikey": PUBLIC_KEY, "Authorization": "Bearer " + PUBLIC_KEY, "Content-Type": "application/json"},
+    body: JSON.stringify({p_user: creds.u, p_pass: creds.p})
+  });
+  if (!r.ok) throw new Error("The database did not answer (" + r.status + "). Try again in a minute.");
+  return r.json();
+}
+
+function card(a) {
+  const u = a.unit;
+  let amount = "", pill = "", cls = "info", lines = [], bar = null;
+  if (a.card) {
+    const d = nextDay(a.day);
+    amount = money(a.monthly, u);
+    pill = "from the card on " + fmtDay(d);
+    lines.push("Nothing to top up.");
+  } else if (a.to_card) {
+    const d = nextDay(a.day);
+    amount = money(a.left, u);
+    const pend = a.pending != null ? Number(a.pending) : null;
+    pill = "about " + money(Math.max(0, (pend != null ? pend : a.monthly) - (a.left || 0)), u) + " from the card on " + fmtDay(d);
+    if (pend != null) lines.push("Built up this month: " + money(pend, u) + ".");
+  } else if (a.usage) {
+    amount = money(a.left, u);
+    const perDay = Number(a.per_day || 0), left = Number(a.left);
+    if (a.left == null) { pill = "no reading yet"; }
+    else if (left <= Number(a.floor || 0)) { cls = "now"; pill = "top up now"; }
+    else if (perDay > 0) {
+      const days = left / perDay;
+      const end = new Date(Date.now() + days * 86400000);
+      cls = days <= NOW_DAYS ? "now" : days <= SOON_DAYS ? "soon" : "ok";
+      pill = (days > 99 ? "99+" : Math.floor(days)) + " days left, to about " + fmtDay(end);
+      lines.push("Using about " + money(perDay, u) + " a day (the busier of the last 7 and 2 days).");
+      bar = Math.max(3, Math.min(100, days / 30 * 100));
+    } else { cls = "ok"; pill = "nothing used lately"; }
+    lines.push("Used since the last real balance: " + money(a.used_since_read, u) + "; last 24 h: " + money(a.last_24h, u) + ".");
+  } else if (a.monthly) {
+    const d = nextDay(a.day), left = Number(a.left);
+    amount = money(a.left, u);
+    const short = Number(a.monthly) - (isNaN(left) ? 0 : left);
+    const days = (d - Date.now()) / 86400000;
+    cls = short <= 0 ? "ok" : days <= 2 ? "now" : days <= 7 ? "soon" : "ok";
+    pill = short <= 0 ? money(a.monthly, u) + " taken on " + fmtDay(d) + " — covered"
+                      : "needs " + money(short, u) + " more before " + fmtDay(d) + " (" + money(a.monthly, u) + " taken that day)";
+  }
+  if (a.read_at) lines.push("Real balance " + money(a.read_amount, u) + ", " + (a.read_how || "read") + ", " + ago(a.read_at) + ".");
+  if (cls === "now" || cls === "soon") lines.push("How: " + a.how_to_top_up + ".");
+  const color = {ok: "var(--ok)", soon: "var(--soon)", now: "var(--now)", info: "var(--muted)"}[cls];
+  return `<div class="card"><div class="top"><div><div class="name">${a.label}</div><div class="what">${a.purpose}</div></div>
+    <div class="amt">${amount}</div></div>
+    <span class="pill ${cls}">${pill}</span>
+    ${bar != null ? `<div class="bar"><i style="width:${bar}%;background:${color}"></i></div>` : ""}
+    ${lines.map(l => `<div class="line">${l}</div>`).join("")}</div>`;
+}
+
+function render(d) {
+  const accts = d.accounts || [];
+  const rank = a => a.card ? 3 : 0;
+  $("cards").innerHTML = accts.slice().sort((x, y) => rank(x) - rank(y)).map(card).join("");
+  $("when").textContent = "Updated " + new Date(d.generated_at).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"}) +
+    " · " + new Date(d.generated_at).toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long"});
+}
+
+async function refresh() {
+  try {
+    const d = await fetchData();
+    if (!d.ok) { signOut(d.error || "Wrong email or password."); return; }
+    render(d);
+  } catch (e) { $("when").textContent = e.message; }
+}
+
+function signOut(msg) {
+  creds = null; clearInterval(timer);
+  $("view").classList.add("hidden"); $("login").classList.remove("hidden");
+  $("p").value = ""; $("err").textContent = msg || "";
+}
+
+$("login").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  $("go").disabled = true; $("err").textContent = "";
+  creds = {u: $("u").value.trim(), p: $("p").value};
+  try {
+    const d = await fetchData();
+    if (!d.ok) { creds = null; $("err").textContent = d.error || "Wrong email or password."; return; }
+    $("login").classList.add("hidden"); $("view").classList.remove("hidden");
+    render(d);
+    timer = setInterval(refresh, 60000);
+  } catch (e) { creds = null; $("err").textContent = e.message; }
+  finally { $("go").disabled = false; }
+});
+$("out").addEventListener("click", () => signOut(""));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && creds) refresh(); });
+</script>
+</body>
+</html>
