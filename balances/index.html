@@ -4,66 +4,101 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Agentium Balances</title>
+<title>Agentium Balance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#14171c;--muted:#5f6773;--line:#e3e6eb;--ok:#1a7f4b;--okbg:#e7f5ee;--soon:#9a6400;--soonbg:#fdf3e1;--now:#b42318;--nowbg:#fdecea;--accent:#2f5bea}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a20;--ink:#eef0f3;--muted:#9aa3ae;--line:#2a2f37;--ok:#4cc38a;--okbg:#14261d;--soon:#f0b44c;--soonbg:#2a2213;--now:#ff7b72;--nowbg:#2c1715;--accent:#7d9bff}}
+/* Same look as the Claude "Agentium Balance Tracker" dashboard: its colours, sizes and fonts. */
+:root{
+  --page:#f9f9f7;--panel:#fff;--fg:#0b0b0b;--muted:#898781;--line:rgba(11,11,11,.10);
+  --ok:#006300;--warn:#734500;--bad:#8e2626;--critical:#d03b3b;
+  --c-openai:#2a78d6;--c-gemini:#eb6834;--c-soniox:#1baf7a;--c-zadarma:#eda100;--c-vultr:#e87ba4;--c-supabase:#008300;--c-airtable:#6250d6;
+  --serif:"Source Serif 4",ui-serif,Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --radius:.5rem;--title:1.375rem;--heading:.9375rem;--body:.875rem;--caption:.75rem;
+  --gap-lg:1.75rem;--gap-md:1rem;--gap-sm:.75rem;--gap-xs:.5rem;--pad-lg:1rem;--pad-sm:.5rem;--pad-xs:.375rem;
+}
+@media (prefers-color-scheme:dark){:root{
+  --page:#0b0b0b;--panel:#1a1a19;--fg:#f0efec;--muted:#898781;--line:rgba(255,255,255,.10);
+  --ok:#0ca30c;--warn:#db9300;--bad:#ec7e7e;
+  --c-openai:#3987e5;--c-gemini:#d95926;--c-soniox:#199e70;--c-zadarma:#c98500;--c-vultr:#d55181;--c-supabase:#0ca30c;--c-airtable:#9085e9;
+}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
-h1{font-size:20px;margin:4px 0 2px}
-.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
-form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:380px;margin:40px auto}
-label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
-input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:16px}
-button{margin-top:18px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
-button:disabled{opacity:.6}
-.err{color:var(--now);font-size:14px;margin-top:12px;min-height:1em}
-.grid{display:grid;gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.name{font-weight:650}
-.what{color:var(--muted);font-size:13px}
-.amt{font-size:28px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
-.pill{display:inline-block;font-size:12px;font-weight:650;padding:3px 9px;border-radius:999px;margin-top:6px}
-.ok{color:var(--ok);background:var(--okbg)}.soon{color:var(--soon);background:var(--soonbg)}.now{color:var(--now);background:var(--nowbg)}.info{color:var(--muted);background:var(--bg)}
-.line{font-size:13px;color:var(--muted);margin-top:8px}
-.bar{height:6px;border-radius:6px;background:var(--line);margin-top:10px;overflow:hidden}
-.bar>i{display:block;height:100%;border-radius:6px}
-.foot{color:var(--muted);font-size:12px;margin-top:18px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.link{background:none;border:0;color:var(--accent);padding:0;margin:0;width:auto;font-size:12px;font-weight:500}
-.hidden{display:none}
+body{margin:0;background:var(--page);color:var(--fg);font:var(--body)/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+main{max-width:1100px;margin:0 auto;padding:28px 16px 48px}
+.hidden{display:none!important}
+
+.mc{display:flex;flex-direction:column;gap:var(--gap-lg)}
+.mc-head{text-align:center}
+.mc-head h1{font-family:var(--serif);font-weight:400;font-size:var(--title);margin:0;color:var(--c-openai)}
+.mc-head p{margin:var(--gap-xs) 0 0;color:var(--muted);font-size:var(--body)}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:var(--gap-md)}
+.mc-card{--svc:var(--muted);background:color-mix(in srgb,var(--svc) 9%,var(--panel));border:1px solid color-mix(in srgb,var(--svc) 35%,var(--line));border-top:5px solid var(--svc);border-radius:var(--radius);padding:var(--pad-lg);display:flex;flex-direction:column;gap:var(--gap-xs);min-width:0}
+.mc-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--gap-sm)}
+.mc-card h2{color:var(--svc);margin:0;font-size:var(--heading);font-weight:500}
+.mc-for{margin:0;color:var(--muted);font-size:var(--caption)}
+.mc-big{color:var(--svc);font-family:var(--serif);font-weight:400;font-size:var(--title);font-variant-numeric:tabular-nums;margin-top:var(--gap-sm)}
+.mc-line{margin:0;font-size:var(--body);font-variant-numeric:tabular-nums}
+.mc-step{margin:var(--gap-xs) 0 0;font-size:var(--caption);color:var(--muted)}
+.mc-pill{font-size:var(--caption);font-weight:500;padding:2px var(--pad-sm);border-radius:999px;white-space:nowrap;color:#fff;background:var(--muted)}
+.mc-pill.ok{background:var(--ok)}.mc-pill.soon{background:var(--warn)}.mc-pill.urgent{background:var(--bad)}
+.mc-sug{margin:var(--gap-sm) 0 0;padding:var(--pad-xs) var(--pad-sm);border-radius:var(--radius);background:color-mix(in srgb,var(--svc) 18%,var(--panel));font-size:var(--body)}
+.mc-chartcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c-openai);border-radius:var(--radius);padding:var(--pad-lg)}
+.mc-chartcard h2{margin:0;font-size:var(--heading);font-weight:500}
+.mc-chartcard p{margin:var(--gap-xs) 0 var(--gap-md);color:var(--muted);font-size:var(--caption)}
+.mc-chart{min-height:120px}
+.mc-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.mc-foot{color:var(--muted);font-size:var(--caption);margin:0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.link{background:none;border:0;color:var(--c-openai);padding:0;font:inherit;cursor:pointer}
+
+form{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c-openai);border-radius:var(--radius);padding:22px;max-width:380px;margin:40px auto}
+form h1{font-family:var(--serif);font-weight:400;font-size:var(--title);margin:0;color:var(--c-openai);text-align:center}
+form .sub{color:var(--muted);font-size:var(--body);text-align:center;margin:var(--gap-xs) 0 var(--gap-sm)}
+label{display:block;font-size:var(--caption);color:var(--muted);margin:12px 0 4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--page);color:var(--fg);font:16px var(--sans)}
+button.go{margin-top:18px;width:100%;padding:12px;border:0;border-radius:var(--radius);background:var(--c-openai);color:#fff;font:500 16px var(--sans);cursor:pointer}
+button.go:disabled{opacity:.6}
+.err{color:var(--bad);font-size:var(--body);margin-top:12px;min-height:1em}
 </style>
 </head>
 <body>
 <main>
   <form id="login" autocomplete="on">
-    <h1>Agentium balances</h1>
+    <h1>Agentium Balance Tracker</h1>
     <div class="sub">Live credit for every service Maria runs on.</div>
     <label for="u">Email</label>
     <input id="u" name="username" type="email" autocomplete="username" required>
     <label for="p">Password</label>
     <input id="p" name="password" type="password" autocomplete="current-password" required>
-    <button id="go" type="submit">Show balances</button>
+    <button class="go" id="go" type="submit">Show balances</button>
     <div class="err" id="err"></div>
   </form>
 
-  <section id="view" class="hidden">
-    <h1>Agentium balances</h1>
-    <div class="sub" id="when"></div>
-    <div class="grid" id="cards"></div>
-    <div class="foot">
+  <div class="mc hidden" id="view">
+    <header class="mc-head">
+      <h1>Agentium Balance Tracker</h1>
+      <p id="when"></p>
+    </header>
+    <section class="mc-grid" id="cards" aria-label="Each account"></section>
+    <section class="mc-chartcard" id="days">
+      <h2>Days left, side by side</h2>
+      <p>The red line is 2 days: below it, top up the same day.</p>
+      <div class="mc-chart" id="bars"></div>
+    </section>
+    <div class="mc-foot">
       <span>"Left" = the last real balance, minus every call and request logged since (exact, at list price). Refreshes every minute.</span>
       <button class="link" id="out" type="button">Sign out</button>
     </div>
-  </section>
+  </div>
 </main>
 <script>
 // The page holds no secret: the key below is Supabase's PUBLIC (publishable) key, and the database answers
 // it with nothing but the result of balance_page(email, password) -- every table is closed to it.
 const SUPABASE_URL = "https://dlxplhhsjmwilgwwjryx.supabase.co";
 const PUBLIC_KEY = "sb_publishable_7G5H8UEOUuRb0Q4rZnebeA_zyBidQeW";
-const SOON_DAYS = 14, NOW_DAYS = 5;
+const RED_LINE_DAYS = 2, SOON_DAYS = 14;
+const LABELS = {ok: "Fine", soon: "Soon", urgent: "Today", card: "Card", info: "—"};
 let creds = null, timer = null;
 
 const $ = id => document.getElementById(id);
@@ -82,6 +117,17 @@ function nextDay(day) {  // the next date with this day of the month (today coun
   if (d < t) d = new Date(t.getFullYear(), t.getMonth() + 1, day);
   return d;
 }
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function line(before, bold, after) {  // "About <b>5</b> days left"
+  const p = el("p", "mc-line");
+  p.append(before, el("b", null, bold), after || "");
+  return p;
+}
 
 async function fetchData() {
   const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/balance_page", {
@@ -93,59 +139,114 @@ async function fetchData() {
   return r.json();
 }
 
-function card(a) {
-  const u = a.unit;
-  let amount = "", pill = "", cls = "info", lines = [], bar = null;
+// Works out what each card says; also used by the bar chart.
+function view(a) {
+  const u = a.unit, v = {status: "info", big: "—", lines: [], step: "", sug: null, days: null};
   if (a.card) {
     const d = nextDay(a.day);
-    amount = money(a.monthly, u);
-    pill = "from the card on " + fmtDay(d);
-    lines.push("Nothing to top up.");
+    v.status = "card"; v.big = money(a.monthly, u) + " a month";
+    v.lines.push(line("Taken from the card on ", fmtDay(d)));
+    v.step = "Nothing to top up.";
   } else if (a.to_card) {
-    const d = nextDay(a.day);
-    amount = money(a.left, u);
-    const pend = a.pending != null ? Number(a.pending) : null;
-    pill = "about " + money(Math.max(0, (pend != null ? pend : a.monthly) - (a.left || 0)), u) + " from the card on " + fmtDay(d);
-    if (pend != null) lines.push("Built up this month: " + money(pend, u) + ".");
+    const d = nextDay(a.day), pend = a.pending != null ? Number(a.pending) : null;
+    const due = Math.max(0, (pend != null ? pend : Number(a.monthly)) - (Number(a.left) || 0));
+    v.status = "card"; v.big = money(pend != null ? pend : a.monthly, u) + " so far";
+    v.lines.push(line("About ", money(due, u), " from the card"));
+    v.lines.push(line("Due ", fmtDay(d)));
+    v.step = "No credit on the account; the month's bill comes off the card.";
   } else if (a.usage) {
-    amount = money(a.left, u);
     const perDay = Number(a.per_day || 0), left = Number(a.left);
-    if (a.left == null) { pill = "no reading yet"; }
-    else if (left <= Number(a.floor || 0)) { cls = "now"; pill = "top up now"; }
-    else if (perDay > 0) {
-      const days = left / perDay;
-      const end = new Date(Date.now() + days * 86400000);
-      cls = days <= NOW_DAYS ? "now" : days <= SOON_DAYS ? "soon" : "ok";
-      pill = (days > 99 ? "99+" : Math.floor(days)) + " days left, to about " + fmtDay(end);
-      lines.push("Using about " + money(perDay, u) + " a day (the busier of the last 7 and 2 days).");
-      bar = Math.max(3, Math.min(100, days / 30 * 100));
-    } else { cls = "ok"; pill = "nothing used lately"; }
-    lines.push("Used since the last real balance: " + money(a.used_since_read, u) + "; last 24 h: " + money(a.last_24h, u) + ".");
-  } else if (a.monthly) {
+    v.big = a.left == null ? "—" : money(Math.abs(left), u) + (left < 0 ? " owed" : " left");
+    if (a.left == null) { v.step = "No reading yet."; }
+    else {
+      const days = perDay > 0 ? Math.max(0, left / perDay) : Infinity;
+      v.days = isFinite(days) ? days : null;
+      v.status = (left <= Number(a.floor || 0) || days <= RED_LINE_DAYS) ? "urgent" : days <= SOON_DAYS ? "soon" : "ok";
+      if (isFinite(days)) {
+        v.lines.push(line("About ", String(days > 99 ? "99+" : Math.floor(days)), Math.floor(days) === 1 ? " day left" : " days left"));
+        v.lines.push(line("Runs out around ", fmtDay(new Date(Date.now() + days * 86400000))));
+      } else v.lines.push(line("", "Nothing used lately", ""));
+      v.step = v.status === "ok" ? "Nothing to do." : v.status === "soon" ? "Top up within the week" : "Top up today";
+      if (v.status !== "ok" && perDay > 0) {
+        const amt = Math.max(5, Math.round(perDay * 7 / 5) * 5);
+        v.sug = [u + amt, "about a week at today's pace"];
+      }
+    }
+  } else if (Number(a.monthly)) {
     const d = nextDay(a.day), left = Number(a.left);
-    amount = money(a.left, u);
     const short = Number(a.monthly) - (isNaN(left) ? 0 : left);
-    const days = (d - Date.now()) / 86400000;
-    cls = short <= 0 ? "ok" : days <= 2 ? "now" : days <= 7 ? "soon" : "ok";
-    pill = short <= 0 ? money(a.monthly, u) + " taken on " + fmtDay(d) + " — covered"
-                      : "needs " + money(short, u) + " more before " + fmtDay(d) + " (" + money(a.monthly, u) + " taken that day)";
+    const days = Math.max(0, (d - Date.now()) / 86400000);
+    v.days = days;
+    v.big = money(a.left, u) + " left";
+    v.status = short <= 0 ? "ok" : days <= RED_LINE_DAYS ? "urgent" : days <= 7 ? "soon" : "ok";
+    v.lines.push(line("About ", String(Math.floor(days)), (Math.floor(days) === 1 ? " day" : " days") + " to the monthly charge"));
+    v.lines.push(line("Charged on ", fmtDay(d), " (" + money(a.monthly, u) + ")"));
+    v.step = short <= 0 ? "Covered: nothing to do." : "Needs " + money(short, u) + " more before " + fmtDay(d) + ".";
+    if (short > 0) v.sug = [money(Math.ceil(short), u), "covers the monthly charge"];
   }
-  if (a.read_at) lines.push("Real balance " + money(a.read_amount, u) + ", " + (a.read_how || "read") + ", " + ago(a.read_at) + ".");
-  if (cls === "now" || cls === "soon") lines.push("How: " + a.how_to_top_up + ".");
-  const color = {ok: "var(--ok)", soon: "var(--soon)", now: "var(--now)", info: "var(--muted)"}[cls];
-  return `<div class="card"><div class="top"><div><div class="name">${a.label}</div><div class="what">${a.purpose}</div></div>
-    <div class="amt">${amount}</div></div>
-    <span class="pill ${cls}">${pill}</span>
-    ${bar != null ? `<div class="bar"><i style="width:${bar}%;background:${color}"></i></div>` : ""}
-    ${lines.map(l => `<div class="line">${l}</div>`).join("")}</div>`;
+  return v;
 }
 
+function card(a) {
+  const v = view(a);
+  const c = el("article", "mc-card"); c.id = a.account;
+  c.style.setProperty("--svc", "var(--c-" + a.account + ", var(--muted))");
+  const top = el("div", "mc-top");
+  top.append(el("h2", null, a.label.replace(/^Google /, "")), el("span", "mc-pill " + v.status, LABELS[v.status]));
+  c.append(top, el("p", "mc-for", a.purpose.charAt(0).toUpperCase() + a.purpose.slice(1)), el("div", "mc-big", v.big), ...v.lines);
+  let step = v.step;
+  if (v.status === "urgent" || v.status === "soon") step += ". How: " + a.how_to_top_up + ".";
+  if (step) c.append(el("p", "mc-step", step.replace(/\.\./g, ".")));
+  if (a.read_at) c.append(el("p", "mc-step", "Real balance " + money(a.read_amount, a.unit) + ", " + (a.read_how || "read") + ", " + ago(a.read_at) + "."));
+  if (v.sug) {
+    const s = el("p", "mc-sug");
+    s.append(el("b", null, "Suggested top-up: " + v.sug[0]), " (" + v.sug[1] + ")");
+    c.append(s);
+  }
+  return c;
+}
+
+function bars(accts) {
+  const box = $("bars"); box.replaceChildren();
+  const rows = accts.map(a => ({a, v: view(a)})).filter(r => r.v.days != null)
+    .map(r => ({key: r.a.account, name: r.a.label.replace(/^Google /, ""), days: r.v.days, status: r.v.status}))
+    .sort((x, y) => x.days - y.days);
+  if (!rows.length) { box.textContent = "—"; return; }
+  const NS = "http://www.w3.org/2000/svg";
+  const W = Math.max(280, box.clientWidth || 600), barH = 26, gap = 14, H = rows.length * (barH + gap) + 24;
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Days of credit left per account");
+  const mk = (tag, attrs, text) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; svg.append(n); return n; };
+  const probe = mk("text", {"font-size": 13, style: "font-family:var(--sans)"});
+  let labelW = 0;
+  box.append(svg);
+  rows.forEach(r => { probe.textContent = r.name; labelW = Math.max(labelW, probe.getComputedTextLength()); });
+  probe.textContent = "60 days"; const endW = probe.getComputedTextLength(); probe.remove();
+  const left = labelW + 12, right = endW + 12, max = Math.max(30, ...rows.map(r => r.days));
+  const x = d => left + (W - right - left) * Math.min(d, max) / max;
+  rows.forEach((r, i) => {
+    const y = i * (barH + gap);
+    mk("text", {x: left - 8, y: y + barH / 2, dy: "0.35em", "text-anchor": "end", "font-size": 13, style: "font-family:var(--sans);fill:var(--fg)"}, r.name);
+    mk("rect", {x: x(0), y, height: barH, rx: 4, width: Math.max(2, x(r.days) - x(0)),
+      style: "fill:" + (r.status === "urgent" ? "var(--critical)" : "var(--c-" + r.key + ", var(--muted))")});
+    mk("text", {x: x(r.days) + 6, y: y + barH / 2, dy: "0.35em", "font-size": 13, style: "font-family:var(--sans);fill:var(--muted)"},
+      (r.days > 99 ? "99+" : Math.floor(r.days)) + (Math.floor(r.days) === 1 ? " day" : " days"));
+  });
+  const lx = x(RED_LINE_DAYS);
+  mk("line", {x1: lx, x2: lx, y1: 0, y2: H - 20, "stroke-dasharray": "4 3", "stroke-width": 1.5, style: "stroke:var(--critical)"});
+  mk("text", {x: lx + 4, y: H - 6, "font-size": 12, style: "font-family:var(--sans);fill:var(--muted)"}, RED_LINE_DAYS + " days");
+}
+
+let last = null;
 function render(d) {
+  last = d;
   const accts = d.accounts || [];
-  const rank = a => a.card ? 3 : 0;
-  $("cards").innerHTML = accts.slice().sort((x, y) => rank(x) - rank(y)).map(card).join("");
-  $("when").textContent = "Updated " + new Date(d.generated_at).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"}) +
-    " · " + new Date(d.generated_at).toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long"});
+  const rank = a => a.card ? 3 : a.to_card ? 2 : 0;
+  $("cards").replaceChildren(...accts.slice().sort((x, y) => rank(x) - rank(y)).map(card));
+  bars(accts);
+  const t = new Date(d.generated_at);
+  $("when").textContent = "Updated " + t.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"}) +
+    " · " + t.toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long"});
 }
 
 async function refresh() {
@@ -177,6 +278,7 @@ $("login").addEventListener("submit", async ev => {
 });
 $("out").addEventListener("click", () => signOut(""));
 document.addEventListener("visibilitychange", () => { if (!document.hidden && creds) refresh(); });
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (last) bars(last.accounts || []); }, 150); });
 </script>
 </body>
 </html>
